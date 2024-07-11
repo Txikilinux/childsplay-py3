@@ -35,12 +35,12 @@ LOGPATH = os.path.join(HOMEDIR, "childsplay.log")
 if os.path.exists(LOGPATH):
     try:
         os.remove(LOGPATH)
-    except Exception, info:
-        print "Failed to remove old log"
-        print info
+    except Exception as info:
+        print("Failed to remove old log")
+        print(info)
     else:
-        print "removed old logpath"
-        
+        print("removed old logpath")
+
 # set loglevel, possible values:
 # logging.DEBUG
 # logging.INFO
@@ -56,8 +56,8 @@ def set_level(level):
         'warning':logging.WARNING,
         'error':logging.ERROR,
         'critical':logging.CRITICAL}
-    if not lleveldict.has_key(level):
-        print "Invalid loglevel: %s, setting loglevel to 'debug'" % level
+    if level not in lleveldict:
+        print("Invalid loglevel: %s, setting loglevel to 'debug'" % level)
         llevel = lleveldict['debug']
     else:
         llevel = lleveldict[level]
@@ -77,7 +77,7 @@ def start():
     fh = logging.FileHandler(LOGPATH)
     fh.setLevel(FILELOGLEVEL)
     #create formatter
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(u"[%(levelname)-7s]-%(asctime)s-%(name)s:%(lineno)d > %(message)s")
     #add formatter to ch and fh
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
@@ -86,10 +86,10 @@ def start():
     logger.addHandler(fh)
     sqla_logger.addHandler(fh)
     logger.info("File logger created: %s" % LOGPATH)
-    
+
     # test
     module_logger = logging.getLogger("childsplay.SPLogging")
     module_logger.info("logger created, start logging")
     import Version
     module_logger.info("Starting childsplay version: %s" % Version.version)
-    
+

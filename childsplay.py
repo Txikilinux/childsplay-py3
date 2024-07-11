@@ -25,14 +25,14 @@ from SPBasePaths import SHARELIBDATADIR
 if len(sys.argv) > 2:
     if sys.argv[1] == '--plainversion':
         from SPVersion import version
-        print version
+        print(version)
         if os.path.exists('/data/userdata/.schoolsplay.rc/tmp'):# btp production only
             shutil.rmtree('/data/userdata/.schoolsplay.rc/tmp',True)
         sys.exit(0)
     # construct proper restart command if we need to restart
     prog = "python %s " % os.path.join(os.getcwd(), " ".join(sys.argv))
 
-print sys.argv
+print(sys.argv)
 
 import subprocess
 #import gc
@@ -42,7 +42,7 @@ from SPOptionParser import OParser
 # if this doesn't bail out the options are correct and we continue with schoolsplay
 
 op = OParser()
-# this will return a class object with the options as attributes  
+# this will return a class object with the options as attributes
 CMD_Options = op.get_options()
 
 ######## Here we add options for debugging #####
@@ -108,15 +108,15 @@ if CMD_Options.loglevel == 'debug':
                'LOCALEDIR', 'LOCKFILE']:
         CPmodule_logger.debug("%s > %s" % (v, eval(v)))
 
-# Rudimentary language check, when it fails it sets the cmdline option to C                                                                                 
-# which is available on every proper GNU/Linux system. We don't have yet a dbase 
+# Rudimentary language check, when it fails it sets the cmdline option to C
+# which is available on every proper GNU/Linux system. We don't have yet a dbase
 # connection at this stage so we just check if the locale is properly formed.
 # We don't care about windows of course that system locale handling sucks anyway.
 loc = CMD_Options.lang
 if loc.find('_') == -1 or loc.upper().find('utf8') == -1:
     pass
-    
-# Make sure we have xml files in a writeable place    
+
+# Make sure we have xml files in a writeable place
 name = 'childsplay'
 p = os.path.join(HOMEDIR, name)
 if not os.path.exists(p):
@@ -147,7 +147,7 @@ if not os.path.exists(p):
         shutil.copy(CONTENTDBASE, p)
     else:
         shutil.copy(os.path.join(SHARELIBDATADIR, CONTENTDBASE), p)
-                        
+
 import pygame
 ## set a bigger buffer, seems that on win XP in conjuction with certain hardware
 ## the playback of sound is scrambled with the "normal" 1024 buffer.
@@ -177,10 +177,10 @@ if CMD_Options.checklog:
     except utils.MyError:
         sys.exit(1)
     sys.exit(0)
-        
+
 if not utils._set_lock():
     sys.exit(1)
-    
+
 import SPMainCore
 
 from SPgdm import GDMEscapeKeyException
@@ -194,14 +194,14 @@ from SPDataManagerCreateDbase import DbaseMaker
 DEBUG = False
 try:
     #This will setup the dbases and ORMS
-    dbm = DbaseMaker(CMD_Options.theme, debug_sql=DEBUG)            
-except (AttributeError, sqla.exceptions.SQLAlchemyError, utils.MyError), info:
+    dbm = DbaseMaker(CMD_Options.theme, debug_sql=DEBUG)
+except (AttributeError, sqla.exceptions.SQLAlchemyError, utils.MyError) as info:
     CPmodule_logger.exception("Failed to start the DBase, %s" % info)
-    raise utils.MyError, info
+    raise utils.MyError(info)
 
 mainscreen = None
-abort = 0 
-tellcore_error = False 
+abort = 0
+tellcore_error = False
 while not abort:
     restartme = False
     try:
@@ -211,7 +211,7 @@ while not abort:
                 orm = dbm.get_all_orms()['stats_session']
                 content_engine, user_engine = dbm.get_engines()
                 session = sqlorm.sessionmaker(bind=user_engine)()
-            except Exception, info:
+            except Exception as info:
                 CPmodule_logger.exception("Failed to get orm for stats_session: %s" % info)
                 abort = True
                 break
@@ -232,7 +232,7 @@ while not abort:
         mcgui.start()
     except SPMainCore.MainEscapeKeyException:
         CPmodule_logger.info("User hits exit/escape...")
-        tellcore_error = False 
+        tellcore_error = False
         if CMD_Options.no_login or CMD_Options.user:
             # we have no login screen or the user was passed as a cmdline option so we exit
             #sys.exit(0)
@@ -246,37 +246,37 @@ while not abort:
             restartme = True
     except GDMEscapeKeyException:
         CPmodule_logger.info("login screen, clean exit")
-        tellcore_error = False 
+        tellcore_error = False
         break
     except utils.RestartMeException:
         CPmodule_logger.info("GIT pull occurred, need to restart myself.")
         restartme = True
         abort = True
-        tellcore_error = False 
-    except (SystemExit, utils.StopmeException),status:
+        tellcore_error = False
+    except (SystemExit, utils.StopmeException) as status:
         if str(status) == '0':
             CPmodule_logger.info("systemexit, clean exit")
             abort = True
         else:
             CPmodule_logger.info("systemexit, not a clean exit")
             CPmodule_logger.info("restarting core.")
-            tellcore_error = True 
+            tellcore_error = True
             mcgui.call_foreign_observers()
-    except utils.SPError, info:
+    except utils.SPError as info:
         CPmodule_logger.error("Unrecoverable error, not a clean exit")
         CPmodule_logger.info("restarting core.")
         tellcore_error = True
         mcgui.call_foreign_observers()
-    except Exception,status:        
+    except Exception as status:
         CPmodule_logger.exception("unhandled exception in toplevel, traceback follows:")
         CPmodule_logger.info("restarting core.")
         tellcore_error = True
         mcgui.call_foreign_observers()
 try:
     mcgui.activity.stop_timer()
-except Exception, info:
+except Exception as info:
     CPmodule_logger.warning("Failed to stop activity timers")
-    
+
 CPmodule_logger.info("Seniorplay stopped.")
 
 #from SPWidgets import Dialog

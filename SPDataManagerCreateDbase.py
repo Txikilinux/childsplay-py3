@@ -99,7 +99,7 @@ class DbaseMaker:
                                    passwd=rc_hash['sp_users']['user_pass'])
                 c = db.cursor()
                 c.execute('''CREATE DATABASE IF NOT EXISTS %s''' % rc_hash['sp_users']['dbasename'])
-                
+
                 db.close()
                 url = 'mysql://%s:%s@%s/%s' %\
                                     (rc_hash['sp_users']['user'], \
@@ -110,7 +110,7 @@ class DbaseMaker:
             else:
                 self.logger.error("I'm confused about which dbase to use, please check your settings in SPConstants and make sure you have all the dependencies installed")
                 raise MyError
-            # The rest is the same for all dbases thanks to sqlalchemy  
+            # The rest is the same for all dbases thanks to sqlalchemy
             self.metadata_usersdb = sqla.MetaData(engine)
             self.metadata_usersdb.bind.echo = debug_sql
             self.sqltb = SQLTables.SqlTables(self.metadata_usersdb)
@@ -130,7 +130,7 @@ class DbaseMaker:
                                         rc_hash['btp_content']['user_pass'], \
                                         rc_hash['btp_content']['host'], \
                                         rc_hash['btp_content']['dbasename']))
-                
+
             self.metadata_contentdb = sqla.MetaData(engine)
             self.metadata_contentdb.bind.echo = debug_sql
             self.orms_content_db = SQLTables.create_contentdb_orms(self.metadata_contentdb)
@@ -139,10 +139,10 @@ class DbaseMaker:
             self.all_orms = {}
             self.all_orms.update(self.orms_userdb)
             self.all_orms.update(self.orms_content_db)
-        except (AttributeError, sqlae.SQLAlchemyError), info:
+        except (AttributeError, sqlae.SQLAlchemyError) as info:
             self.logger.exception("Failed to start the DBase, %s" % info)
-            raise MyError, info
-            
+            raise MyError(info)
+
     def get_engines(self):
         return(self.content_engine, self.user_engine)
     def get_all_orms(self):
@@ -151,7 +151,7 @@ class DbaseMaker:
         return (self.orms_content_db, self.orms_userdb)
     def get_metadatas(self):
         return (self.metadata_contentdb, self.metadata_usersdb)
-    def _get_sqltables(self):    
+    def _get_sqltables(self):
         return self.sqltb
-        
-            
+
+

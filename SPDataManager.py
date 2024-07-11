@@ -21,6 +21,7 @@
 
 #create logger, logger was configured in SPLogging
 import logging
+import importlib
 module_logger = logging.getLogger("childsplay.SPDataManager")
 
 import atexit, os, sys, datetime
@@ -138,7 +139,7 @@ class DataManager:
         query = session.query(orm)
         self.all_ids = [result.CID for result in query.all()]
         session.close()
-        
+
         if self.cmd_options.no_login:
             self.current_user = 'SPUser'
             self._start_gdm_greeter()
@@ -153,7 +154,7 @@ class DataManager:
             # we don't have a working login screen yet
             self.current_user='SPUser'
             self._start_gdm_greeter()
-    
+
     def reset(self):
         self.UserSession.close_all()
         self.ContentSession.close_all()
@@ -162,19 +163,19 @@ class DataManager:
             self.content_engine.dispose()
         except:
             pass
-    
+
     def _get_language(self):
         return self.language
-    
+
     def _check_tables_uptodate(self):
         self.logger.debug("_check_tables_uptodate")
-        reload(SPHelpText)
+        importlib.reload(SPHelpText)
         modules = [x for x in os.listdir(ACTIVITYDATADIR) if '.py' in x and not '.pyc' in x]
         # check that all the activities are present in the activity_options table
         orm, session = self.get_orm('activity_options', 'user')
         if orm == None:
             self.logger.error("No activity_options ORM found, dbase corrupt")
-            raise MyError, "No activity_options ORM found, dbase corrupt"
+            raise MyError("No activity_options ORM found, dbase corrupt")
         for m in modules:
             m = m[:-3]
             query = session.query(orm)
@@ -185,10 +186,10 @@ class DataManager:
                 session.add(orm(m))
         session.commit()
         session.close()
-                                        
+
         orm, session = self.get_orm('group_names', 'user')
-        
-        # make user demo    
+
+        # make user demo
         orm, session = self.get_orm('users', 'user')
         result = session.query(orm).filter_by(login_name = 'Demo').first()
         if not result:
@@ -206,17 +207,17 @@ class DataManager:
         session.close()
         # check for mandatory DT sequences
         orm, session = self.get_orm('dt_sequence', 'user')
-        query = session.query(orm).filter_by(target = u'demo').all()
+        query = session.query(orm).filter_by(target = 'demo').all()
         if len(query) != len(DEMO_DT):
             self.logger.info("demo dt target differs from hardcoded sequence, replacing it")
             session.query(orm).filter(orm.target == 'demo').delete()
             session.commit()
             for row in DEMO_DT:
                 session.add(orm(**row))
-        query = session.query(orm).filter_by(target = u'default').all()
+        query = session.query(orm).filter_by(target = 'default').all()
         if not query:
             self.logger.info("default dt target missing, adding a hardcoded sequence.")
-            session.query(orm).filter(orm.target == u'default').delete()
+            session.query(orm).filter(orm.target == 'default').delete()
             session.commit()
             for row in DEFAULT_DT:
                 session.add(orm(**row))
@@ -226,29 +227,29 @@ class DataManager:
         if not val or val != 'yes':
             # we also set two DT sequences once, user can remove them
             orm, session = self.get_orm('dt_sequence', 'user')
-            query = session.query(orm).filter_by(target = u'Easy').all()
+            query = session.query(orm).filter_by(target = 'Easy').all()
             if not query:
                 self.logger.info("First time Easy dt target missing, adding a hardcoded sequence.")
-                session.query(orm).filter(orm.target == u'Easy').delete()
+                session.query(orm).filter(orm.target == 'Easy').delete()
                 session.commit()
                 for row in EASY_DT:
                     session.add(orm(**row))
-            query = session.query(orm).filter_by(target = u'Hard').all()
+            query = session.query(orm).filter_by(target = 'Hard').all()
             if not query:
                 self.logger.info("First time Hard dt target missing, adding a hardcoded sequence.")
-                session.query(orm).filter(orm.target == u'Hard').delete()
+                session.query(orm).filter(orm.target == 'Hard').delete()
                 session.commit()
                 for row in HARD_DT:
                     session.add(orm(**row))
             session.commit()
             session.close()
             self._set_rcrow('SPDatamanager', 'set_extra_dt_sequences', 'yes', 'flag to check if we already have set the extra dt sequences')
-        
+
     def _cleanup(self):
         """atexit function"""
         # Nothing to see here, please move on.
         self.reset()
-    
+
     def _start_btp_screen(self):
         """Starts a login screen for the braintrainer plus.
         Beaware that this only works on a BTP system as the login and
@@ -263,13 +264,13 @@ class DataManager:
             self.current_user = result[1]
             self._start_gdm_greeter()
         elif result[0] == 'quit':
-            raise StopmeException, 0
+            raise StopmeException(0)
         elif result[0] == 'controlpanel':
             self.COPxml = result[1]
-            
+
     def are_we_cop(self):
         return self.COPxml
-        
+
     def _start_gdm_greeter(self):
         """Will start login screen and stores the login name in the db"""
         self.current_user = 'Demo'
@@ -287,7 +288,7 @@ class DataManager:
             # we always must run under a user name so we use default
             username = self.cmd_options.user
             self.logger.debug("No login, setting username to default: %s" % username)
-        
+
         # Now that we have a name we first check if it already exists
         # get the users table
         orm, session = self.get_orm('users', 'user')
@@ -325,10 +326,10 @@ class DataManager:
         if not self.current_user:
             return ''
         return self.current_user
-        
+
     def get_user_id(self):
         return self.current_user_id
-        
+
     def get_user_id_by_loginname(self, username):
         """Returns the user_id.
         @username must be the users login name"""
@@ -340,7 +341,7 @@ class DataManager:
             self.logger.warning("No user %s found, expect more trouble :-(" % username)
         else:
             return result.user_id
-            
+
     def get_user_dbrow_by_loginname(self, username):
         """Returns the user_id.
         @username must be the users login name"""
@@ -350,15 +351,15 @@ class DataManager:
         result = query.first()
         if not result:
             self.logger.warning("No user %s found, expect more trouble :-(" % username)
-            return 
+            return
         else:
             return result
-    
+
     def get_table_names(self):
         """Returns a list with the names (strings) of the SQL tables currently in use."""
-        tl = self.metadata_usersdb.tables.keys()
+        tl = list(self.metadata_usersdb.tables.keys())
         return tl
-    
+
     def get_orm(self, tablename, dbase):
         try:
             t = self.all_orms[tablename]
@@ -375,7 +376,7 @@ class DataManager:
             else:
                 self.logger.warning("no such dbase: %s" % t)
                 return None, None
-            
+
     def get_served_content_orm(self):
         return self.get_orm('served_content', 'user')
 
@@ -383,7 +384,7 @@ class DataManager:
         orm, session = self.get_orm(table, 'user')
         query = session.query(orm)
         return query.all()
-    
+
     def get_mu_sigma(self, name):
         orm, session = self.get_orm('activity_options', 'user')
         query = session.query(orm)
@@ -391,14 +392,14 @@ class DataManager:
         result = query.first()
         if not result:
             self.logger.warning("Not found mu and sigma for %s, expect more trouble :-(" % name)
-            return 
-        return (result.mu, result.sigma)    
+            return
+        return (result.mu, result.sigma)
 
     def get_served_content_mapper(self):
         orm, session = self.get_orm('served_content', 'user')
         mclass = ServedMapper(orm, session, self.current_user_id, self.current_user)
         return mclass
-        
+
     def get_mapper(self, activity, dbase='user'):
         self.logger.debug("get_mapper called with activity:%s" % activity)
         #self.metadata_usersdb.bind.echo = True
@@ -473,7 +474,7 @@ class DataManager:
         session.commit()
         session.close()
         return val
-     
+
     def _update_rcrow(self, actname, key, val):
         orm, session = self.get_orm('spconf', 'user')
         query = session.query(orm).filter_by(activity_name = actname).filter_by(key = key).first()
@@ -482,7 +483,7 @@ class DataManager:
         session.commit()
         session.close()
         self._set_rcrow(actname, key, val, comm)
-        
+
 class RowMapper:
     """DB object used by the core and activity to store data in the dbase
     table and row beloging to the current activity.
@@ -494,19 +495,19 @@ class RowMapper:
         self.orm = orm
         self.session = session
         self.coldata = {}
-            
+
     def insert(self, col, data):
         """collects all the data which should go into a row.
         You must call 'commit' to actually store it into the dbase."""
         self.logger.debug("insert in %s: %s" % (col, data))
         self.coldata[col] = data
-            
+
     def update(self, rowdata):
         """insert a row in to the current table.
         @rowdata must be a dictionary with column keys and data values.
         You must call 'commit' to actually store it into the dbase."""
         self.coldata.update(rowdata)
-    
+
     def commit(self):
         """Flush dbase data to disk.
         Returns None on success and True on faillure."""
@@ -530,17 +531,17 @@ class RowMapper:
         query.filter_by(level = levelnum)
         query.filter_by(user_id = self.user_id)
         return query.all()
-    
+
     def _get_start_time(self):
         """Used by the maincore"""
-        if self.coldata.has_key('start_time'):
+        if 'start_time' in self.coldata:
             return self.coldata['start_time']
-        
+
     def _get_end_time(self):
         """Used by the maincore"""
-        if self.coldata.has_key('end_time'):
+        if 'end_time' in self.coldata:
             return self.coldata['end_time']
-    
+
     def get_orm(self):
         return self.orm
     def get_session(self):
@@ -562,7 +563,7 @@ class ServedMapper:
         self.orm = orm
         self.session = session
         self.coldata = {}
-          
+
     def insert(self, cid, gtheme):
         """collects all the data which should go into a row.
         You must call 'commit' to actually store it into the dbase."""
@@ -572,19 +573,19 @@ class ServedMapper:
                        module='', start_time=datetime.datetime.now(), \
                         count_served=1)
         self.session.add(svc)
-        
+
     def commit(self):
         if not self.session:
             return
         self.logger.debug("commiting session")
         self.session.commit()
         self.session.close()
-        
+
     def close(self):
         if not self.session:
             return
         self.session.close()
-    
+
 class BogusMapper:
     """Bogus mapper class used when we are in anonymousmode"""
     def __init__(self):
@@ -606,7 +607,7 @@ class BogusMapper:
     def get_table_column_names(self):
         pass
     def get_table_data(self):
-        pass  
+        pass
     def delete_row(self, row_id):
         pass
     def get_table_selection(self, args):

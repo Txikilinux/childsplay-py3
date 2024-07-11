@@ -37,10 +37,10 @@ class Animation(SPSpriteUtils.SPSprite):
         self.counter = 0
         SPSpriteUtils.SPSprite.__init__(self, self.animationlist[0])
         self.moveto(pos)
-    
+
     def on_update(self,*args):
         """This is called by group.refresh method"""
-        if self.counter < self.wait: 
+        if self.counter < self.wait:
             self.counter += 1
             return
         else:
@@ -71,10 +71,10 @@ class birthday:
         for file in glob.glob(self.animations_path):
             self.animationlist.append(utils.load_image(file))
         self.animation = Animation(self.animationlist)
-                    
+
     def run(self):
         runloop = 100
-        
+
         while runloop:
             runloop -= 1
             pygame.time.wait(100)
@@ -87,36 +87,36 @@ class birthday:
                 if self.actives.update(event):
                     runloop = 0
             self.animation.on_update()
-            
-        
+
+
 
 if __name__ == '__main__':
-    
-    import __builtin__
-    __builtin__.__dict__['_'] = lambda x:x
-    
+
+    import builtins
+    builtins.__dict__['_'] = lambda x:x
+
     import SPLogging
     SPLogging.set_level('debug')
     SPLogging.start()
-    
+
     pygame.init()
-    
+
     from SPSpriteUtils import SPInit
-    
+
     def cbf(sprite, event, data=''):
-        print 'cb called with sprite %s, event %s and data %s' % (sprite, event, data)
-        print 'sprite name: %s' % sprite.get_name()
-        print 'data is %s' % data
-    
+        print('cb called with sprite %s, event %s and data %s' % (sprite, event, data))
+        print('sprite name: %s' % sprite.get_name())
+        print('data is %s' % data)
+
     scr = pygame.display.set_mode((800, 600))
     scr.fill(GREY90)
     pygame.display.flip()
     back = scr.convert()
     actives = SPInit(scr, back)
-    
+
     SPWidgets.Init('braintrainer')
-    
+
     b = birthday(scr, back)
     b.run()
-    
+
 

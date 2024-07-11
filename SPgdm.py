@@ -32,7 +32,7 @@ from SPSpriteUtils import SPInit
 
 from utils import char2surf, load_image
 
-CORE_BUTTONS_XCOORDS = range(6, 790, 88)
+CORE_BUTTONS_XCOORDS = list(range(6, 790, 88))
 
 import pygame
 
@@ -43,9 +43,9 @@ from pygame.constants import *
 
 if __name__ == '__main__':
     # needed to simulate gettext
-    import __builtin__
-    __builtin__.__dict__['_'] = lambda x:x
-        
+    import builtins
+    builtins.__dict__['_'] = lambda x:x
+
 #from SPocwWidgets import InfoDialog, ExitDialog, SPEntry, SPLabel
 #from SPVirtualkeyboard import VTKEscapeKeyException
 import SPHelpText
@@ -60,7 +60,7 @@ class GDMEscapeKeyException(Exception):
     """ This is raised from the activity_loop when the user hits escape.
     We basically using this exception as a signal"""
     pass
-    
+
 class SPGreeter:
     """Starts a login screen, this will be a window, not fullscreen.
     """
@@ -95,20 +95,20 @@ class SPGreeter:
             vs = vs + " (Adminmode)"
         vsurf = char2surf(vs, TTFSIZE-4, (0, 0, 0), ttf=TTF, bold=True, antialias=False)
         self.screen.blit(vsurf, (300, 0))
-        
+
         self.actives = SPInit(self.screen, self.screen.convert())
-        
+
         pygame.display.set_caption(captxt.encode('utf-8'))
 
         # setup our SP widgets
         label = SPLabel(_("Username:"), fontsize=TTFSIZE + 2)
         label.moveto((340, 250))
         self.actives.add(label)
-        
+
         self.entry = SPEntry((340, 280), 9)
         self.entry.display_sprite()
         self.actives.add(self.entry)
-        
+
         # setup ocempgui widgets
         self.renderer = ocw.Renderer()
         self.renderer.set_screen(self.screen)
@@ -121,7 +121,7 @@ class SPGreeter:
         # Looks like the C days are here again :-D
         t = _("Login")
         but.set_text(t)# we set the fontsize below
-        
+
         but.child.create_style()
         but.child.style["font"]["size"] = TTFSIZE
         but.child.style['bgcolor'][ocwc.STATE_NORMAL] = KOBALT_LIGHT_BLUE
@@ -135,7 +135,7 @@ class SPGreeter:
         # was generated.
         pygame.event.clear()
         self.renderer.add_widget(but)
-        
+
         # logout button
         p = os.path.join(ICONPATH, 'spgdm_quit_button.png')
         if not os.path.exists(p):
@@ -146,7 +146,7 @@ class SPGreeter:
         #but.opacity = 180
         but.topleft = (720, 520)
         self.renderer.add_widget(but)
-        
+
         # info button
         p = os.path.join(ICONPATH, 'spgdm_info_button.png')
         if not os.path.exists(p):
@@ -159,10 +159,10 @@ class SPGreeter:
         #but.opacity = 180
         but.topleft = (20, 520)
         self.renderer.add_widget(but)
-        
+
         self.clock = pygame.time.Clock()
         self.runloop = True
-        
+
         pygame.display.update()
         # run the virtual keyboard if we have one.
         if self.vtkb:
@@ -170,7 +170,7 @@ class SPGreeter:
         else:
             # else we run a 'normal' loop.
             self._run_loop()
-        
+
     def _run_loop(self):
         #self.runloop=0 # Used when profiling this module
         while self.runloop:
@@ -185,15 +185,15 @@ class SPGreeter:
                     if self.actives.refresh(event):
                         self._login_button_callback(self.entry)
             self.renderer.distribute_events( * events)
-            
-            
+
+
     def _run_vtkb_loop(self, parent_re=None):
         self.vtkb.show()
         kb = self.vtkb.echo_run(parent_re=[parent_re, self.renderer])
         word = []
         while self.runloop:
             try:
-                k = kb.next()# this will return a string or none
+                k = next(kb)# this will return a string or none
                 if k and k not in ('quit', 'enter'):# user hits anything but None, enter or escape
                     word.append(k)
                     self.entry.set_text(''.join(word))
@@ -205,7 +205,7 @@ class SPGreeter:
             except (StopIteration, VTKEscapeKeyException):
                 self._quit_button_callback()
                 break
-                
+
     def _login_button_callback(self, entry):
         self.logger.debug("_login_button_callback called with %s" % entry)
         self.__name = entry.text
@@ -229,7 +229,7 @@ class SPGreeter:
 
     def get_loginname(self):
         return self.__name
-        
+
 if __name__ == '__main__':
     def main():
         class Fake:
@@ -241,12 +241,12 @@ if __name__ == '__main__':
         except GDMEscapeKeyException:
             pass
         else:
-            print "got name: %s" % g.get_loginname()
+            print("got name: %s" % g.get_loginname())
 
     import cProfile
     prof = cProfile.run('main()','profiler_out_0')
- 
-    
-        
+
+
+
 
 

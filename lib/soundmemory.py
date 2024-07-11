@@ -383,13 +383,13 @@ class Activity:
             self.actives.update(item)# Check all objects in group for callback function
         except:
             self.logger.exception("Unhandled exception")
-            raise StandardError
+            raise Exception
         # check if there objects left in the sprite group
         if not self.actives.sprites():
             # we call the SPGoodies observer to notify the core the level
             # is ended and we want to store the collected data
             num = 0
-            for n in Global.selected_cards.values():
+            for n in list(Global.selected_cards.values()):
                 num += n
             # store into dbase
             self.db_mapper.insert('knownsounds',num)

@@ -23,9 +23,9 @@ import os
 import types
 import subprocess
 import glob
-import ConfigParser
+import configparser
 from SPConstants import *
-import logging 
+import logging
 module_logger = logging.getLogger("childsplay.SPWidgets")
 
 WEHAVEAUMIX = False
@@ -36,7 +36,7 @@ def Init(theme):
     global THEME,  WEHAVEAUMIX
     module_logger.debug('Init called with:%s' % theme)
     # theme is used by the widgets
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     rc = os.path.join( GUITHEMESPATH, theme, 'SPWidgets.rc')
     if not os.path.exists(rc):
         module_logger.info('theme file %s does not exists' % rc)
@@ -48,7 +48,7 @@ def Init(theme):
     module_logger.debug("Using rc file %s" % rc)
     d = {}
     config.read(rc)
-    for k, v in dict(config.items('default')).items():
+    for k, v in list(dict(config.items('default')).items()):
         try:
             d[k] = eval(v, {'__builtins__': None}, {})
         except NameError:
@@ -57,15 +57,15 @@ def Init(theme):
     d['theme'] = theme
     d['themepath'] = os.path.dirname(rc)
     d['defaultpath'] = os.path.join( GUITHEMESPATH,'default')
-    module_logger.debug("rc file contents: %s" % [d])     
+    module_logger.debug("rc file contents: %s" % [d])
     THEME = d
     volume_level = 50
     try:
         cmd=subprocess.Popen("amixer get Master",shell=True,\
                               stdout=subprocess.PIPE,\
                               stderr=subprocess.PIPE)
-        output = cmd.communicate()[0]
-    except Exception, info:
+        output = cmd.communicate(timeout=0.5)[0]
+    except Exception as info:
         module_logger.warning("program 'amixer' not found, unable to set volume levels: %s" % info)
         WEHAVEAUMIX = False
     else:
@@ -96,10 +96,10 @@ class Widget(SPSprite):
         self._prev_mouse_pos = None
         self.THEME = THEME
         self.WEHAVEAUMIX = WEHAVEAUMIX
-        
+
     def enable(self, enable):
-        """Set wetter the sprite can react to events. 
-        enable - True or False 
+        """Set wetter the sprite can react to events.
+        enable - True or False
         When enable is set to False the sprite is disconnected from the callback
         function as well as 'greyed-out'.
         When enable is True the sprite is connected again and redisplayed.
@@ -134,7 +134,7 @@ class Widget(SPSprite):
             self.erase_sprite()
             self.display_sprite()
             self._amienabled = True
-            
+
     def set_drag_enabled(self, enabled):
         self._DragEnabled = enabled
         self._org_center = self.rect.center
@@ -142,15 +142,14 @@ class Widget(SPSprite):
         self._DropEnabled = enabled
     def get_actives(self):
         return self
-    
+
     def _DnDreset(self):
         self.moveto(self._org_pos,False)
-        
+
     # These methods should be overridden in your derived class
     def start_drag_event(self, widget, mouseposition):
         self.logger.debug("start_drag_event: widget %s, position %s" % (widget,mouseposition))
-    def end_drag_event(self, widget, mouseposition):    
+    def end_drag_event(self, widget, mouseposition):
         self.logger.debug("end_drag_event: widget %s, position %s" % (widget,mouseposition))
     def drop_event(self, widget, mouseposition):
         self.logger.debug("end_drag_event: widget %s" % widget,mouseposition)
-    

@@ -31,7 +31,7 @@ import pygame
 import threading
 import textwrap
 import types
-import ConfigParser
+import configparser
 import subprocess
 import datetime
 from pygame.constants import *
@@ -39,6 +39,7 @@ import time
 
 #create logger, logger was configured in SPLogging
 import logging
+import importlib
 module_logger = logging.getLogger("childsplay.SPMainCore")
 
 import utils
@@ -52,7 +53,7 @@ from SPGoodies import SPGoodies
 # This is a kludge to execute the toplevel code in SPConstants as it is already
 # imported in SPlogging before the loggers are set.
 import SPConstants
-reload(SPConstants)
+importlib.reload(SPConstants)
 from SPConstants import *
 
 try:
@@ -91,7 +92,7 @@ def cleanup():
 #    if os.path.exists(index_php):
 #        os.remove(index_php)
 #    shutil.copy(index_off_php, index_php)
-    
+
 atexit.register(cleanup)
 
 class MainEscapeKeyException(Exception):
@@ -109,7 +110,7 @@ class GDMEscapeKeyException(Exception):
     """ This is raised from the activity_loop when the user hits escape.
     We basically using this exception as a signal"""
     pass
-    
+
 class MainCoreGui:
     def __init__(self, resolution=(800, 600), dbmaker=None, options=None,
                  fullscr=None, mainscr=None, error=False,session_id=None,
@@ -117,7 +118,7 @@ class MainCoreGui:
         """The main SP core.
         The idea is that we have a menubar and a activity area.
         The menu bar is the place for "our" gui widgets.
-        
+
         The activity doesn't draw in the menu bar and we don't come
         into the activity area.
         We call from the eventloop first some local checks like pressing escape etc.
@@ -144,7 +145,7 @@ class MainCoreGui:
         # language = self.cmd_options.lang
         dbase = os.path.join(HOMEDIR, self.theme, 'quizcontent.db')
         self.foreign_observers = []
-        
+
         # we setup the stuff we need for the stats table data.
         # we collect evrything in a hash and when we done we put it into a
         # dbase table.
@@ -153,18 +154,18 @@ class MainCoreGui:
         self.core_rc_path = os.path.join(ACTIVITYDATADIR, 'SPData', 'base', 'themes','core.rc')
         self.logger.debug("Parsing core rc file %s" % self.core_rc_path)
         d = {}
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read(self.core_rc_path)
-        for k, v in dict(config.items(self.theme)).items():
+        for k, v in list(dict(config.items(self.theme)).items()):
             d[k] = v
         d['theme'] = self.theme
         self.core_rc = d
         self.logger.debug("found core rc options %s" % d)
-                
+
         if self.cmd_options.no_sound:
             self.logger.info("Disabling sound support as requested by user")
             pygame.mixer.quit()
-                    
+
         # set mouse cursor ?
         # TODO: use different cursors with an cmdline option
         if self.cmd_options.bigcursor:
@@ -175,8 +176,8 @@ class MainCoreGui:
             set_no_mouse_cursor()
         self.resolution = resolution
         self.vtkb = None # will become the virtual keyboard object
-        
-        ## Set icon for the window manager ## 
+
+        ## Set icon for the window manager ##
         ICONPATH = os.path.join(ACTIVITYDATADIR, 'SPData', 'themes', self.theme)
         DEFAULTICONPATH = os.path.join(ACTIVITYDATADIR, 'SPData', 'themes', 'childsplay')
         # TODO:change icon files to the ones we would use
@@ -197,9 +198,9 @@ class MainCoreGui:
         else:
             surface.set_colorkey(surface.get_at((0, 0)), RLEACCEL)
             pygame.display.set_icon(surface)
-        
+
         # Thread lock, must be used by activities to be able to block everything.
-        self.lock = threading.Lock() 
+        self.lock = threading.Lock()
 
         while start_splash + 3 > time.time():
             time.sleep(0.1)
@@ -223,16 +224,16 @@ class MainCoreGui:
         else:# we only have two options: top or bottom
             y = 0
             blitpos_y = 100
-            self.menu_rect = pygame.Rect(0, 0, 800, 100)                
+            self.menu_rect = pygame.Rect(0, 0, 800, 100)
         captxt = _("Childsplay_sp - educational activities, using theme:%s") % self.theme
         if self.cmd_options.theme != 'childsplay':
             captxt = captxt.replace('Childsplay_sp', self.cmd_options.theme)
-        pygame.display.set_caption(captxt.encode('utf-8'))
-        
+        pygame.display.set_caption(str(captxt.encode('utf-8')))
+
         self.backgroundimage = utils.load_image(os.path.join(ICONPATH, self.theme_rc['background']))
         self.screen.blit(self.backgroundimage, (0, 0))
         img = utils.load_image(os.path.join(ICONPATH, self.theme_rc['menubartop']))
-                
+
         self.backgroundimage.blit(img, (0, y))
         self.screen.blit(self.backgroundimage, (0, 0))
         self.backgr = self.screen.convert()# a real copy
@@ -241,9 +242,9 @@ class MainCoreGui:
         self.actives_group.set_onematch(True)
         # Must be called before using SPWidgets
         Init(self.theme)
-        
+
         # setup SPGoodies which we pass to the activities
-        # from here on we set various attributes for the spgoodies instance 
+        # from here on we set various attributes for the spgoodies instance
         self.screenclip = None
         self.spgoodies = SPGoodies(self, self.screen, \
             self.get_virtkb, \
@@ -268,10 +269,10 @@ class MainCoreGui:
         # special goodies for the menu
         self.spgoodies._menu_activity_userchoice = self._menu_activity_userchoice
         self.spgoodies._cmd_options = self.cmd_options
-        self.spgoodies.stats_hash = self.statshash  
+        self.spgoodies.stats_hash = self.statshash
         # and one for the quizengine
         self.spgoodies._unmute_quiz_voice = True
-             
+
         if error:
             # there was an error in sp and the core is restarted
             self.activity_info_dialog(_("An error occurred and BraintrainerPlus was restarted"))
@@ -282,7 +283,7 @@ class MainCoreGui:
             self.dm = SPDataManager.DataManager(self.spgoodies, dbmaker)
         except sqlae.SQLAlchemyError:
             self.logger.exception("Error while handling the dbase, try removing the existing dbase")
-        except utils.MyError, info:
+        except utils.MyError as info:
             self.logger.error("%s" % info)
             raise utils.SPError
         # # get locale setting from dbase and reset any locales already set to the
@@ -303,7 +304,7 @@ class MainCoreGui:
         row = session.query(orm).filter_by(user_id = user_id).first()
         self.statshash['user_id'] = user_id
         self.statshash['datetime'] = datetime.datetime.now()# we override it when something is loaded
-        # we now have user data so we check to see if we should set some custom stuff 
+        # we now have user data so we check to see if we should set some custom stuff
         # Set volume level
         if not row:
             self.logger.warning("Not found userdata for user id:%s" % user_id)
@@ -316,8 +317,8 @@ class MainCoreGui:
             cmd=subprocess.Popen("amixer get Master",shell=True, \
                                  stdout=subprocess.PIPE, \
                                  stderr=subprocess.PIPE)
-            output = cmd.communicate()[0]
-        except Exception, info:
+            output = cmd.communicate(timeout=0.5)[0]
+        except Exception as info:
             module_logger.warning("program 'amixer' not found, unable to set volume levels: %s" % info)
             self.volume_level = 75
         else:
@@ -348,10 +349,10 @@ class MainCoreGui:
         else:
             self.no_levelup_dlg = False
         if self.dm.are_we_cop():
-            self.COPmode = True        
+            self.COPmode = True
             self.statshash['is_cop'] = True
         # restore window title after the datamanager replaced it
-        pygame.display.set_caption(captxt.encode('utf-8'))
+        pygame.display.set_caption(str(captxt.encode('utf-8')))
         if self.COPmode:
             theme_dir = os.path.join('controlpanel_lgpl','lib', 'SPData')
             xmlname = self.dm.are_we_cop()
@@ -396,10 +397,10 @@ class MainCoreGui:
         showpersonalquiz = False
         try:
             self.activity = SPMenu.Activity(self.COPmode, showpersonalquiz, showlocalquiz)
-        except Exception, info:
+        except Exception as info:
             self.logger.exception("Failed to setup the menu")
-            raise utils.MyError, info
-        # First we parse the menu xml            
+            raise utils.MyError(info)
+        # First we parse the menu xml
         self.activity._parse_menu(os.path.join(ACTIVITYDATADIR, 'SPData', 'themes', self.theme), xmlname)
         # now we can build the menu buttons
         if self.COPmode:
@@ -407,15 +408,15 @@ class MainCoreGui:
         else:
             theme_dir = os.path.join(THEMESPATH, self.theme)
         self.activity._build_menu(theme_dir, self.theme_rc, language[0])
-        
+
         r = pygame.Rect(0, blitpos_y, 800, 500)
         # Add the rect to SPGoodies so that activities know where to blit.
         self.spgoodies.screenrect = r
         self.spgoodies.background = self.backgr
-               
+
         # now we can finish the menu object
         self.activity._setup(self.spgoodies, self.dm, self.theme_rc['menubarbottom'])
-        
+
         # Setup the menubar
         self.excludebuttons = self.theme_rc['exclude_buttons']
         if self.theme_rc['level_indicator'] == 'star':
@@ -426,7 +427,7 @@ class MainCoreGui:
             usegraph = False
         else:
             usegraph = True
-            
+
         self.menubar = MenuBar(self.menu_rect, \
                                self.actives_group, self.menubar_cbf,\
                                 self.menubar_dice_cbf, self.lock, usestar, \
@@ -438,16 +439,16 @@ class MainCoreGui:
         self.scoredisplay = self.menubar.get_scoredisplay()
         self.volumebutton = self.menubar.get_volumebutton()
         self.menubarbuttons = [self.infobutton, self.quitbutton, self.volumebutton]
-        
+
         self.chartbutton = self.menubar.get_chartbutton()
         self.dicebuttons = self.menubar.get_dicebuttons()
-                
+
         self.spgoodies.scoredisplay = self.scoredisplay
         self.spgoodies.infobutton = self.infobutton
         self.spgoodies.quitbutton = self.quitbutton
-        
+
         self.spgoodies.dm = self.dm
-        
+
         if not 'dice' in self.excludebuttons and not self.COPmode:
             self.dicebuttons.UseDice = True
         else:
@@ -455,12 +456,12 @@ class MainCoreGui:
         if not 'graph' in self.excludebuttons and not self.COPmode:
             self.menubarbuttons.append(self.chartbutton)
             # disable the chartbutton
-            self.chartbutton.enable(False) 
+            self.chartbutton.enable(False)
         if not 'score' in self.excludebuttons and not self.COPmode:
             self.menubarbuttons.append(self.scoredisplay)
-        
+
         self.actives_group.add(self.menubarbuttons)
-        
+
         # add the current user, if it exists
         text = _("User: %s") % self.dm.get_username()
         # TODO: Do we do an andmin mode ?
@@ -475,14 +476,14 @@ class MainCoreGui:
         else:
             self.usernamelabel = None
         if not 'activity' in self.excludebuttons:
-            text = _("Activity :") 
+            text = _("Activity :")
             self.activitylabel = Label(text, (CORE_BUTTONS_XCOORDS[1], y+50))
         else:
             self.activitylabel = None
-        
+
         # Show the mainscreen and menubar
         self.clear_screen()
-        
+
         # setup misc stuff
         self.clock = pygame.time.Clock()
         self.run_activity_loop = True
@@ -491,31 +492,31 @@ class MainCoreGui:
         self.framerate = 30
         self.were_in_pre_level = False
         self.store_data = True
-                        
+
         if self.COPmode:
             self.clear_screen()
             self.disable_menubuttons()
             self.scoredisplay.UseMe = False
             self.enable_exit_button()
             self.quitbutton.display_sprite()
-    
+
     def register_foreign_observer(self, obs):
         """You should register your observer that will take care of any cleanup
         in case of an error"""
         self.foreign_observers.append(obs)
-    
+
     def call_foreign_observers(self):
         self.logger.warning("Calling foreign_observers to cleanup their own mess")
         for obs in self.foreign_observers:
             apply(obs)
-    
+
     def start(self):
         # start menu
         self.activity.start()
-        #For memoryleak debugging 
+        #For memoryleak debugging
         #h.setrelheap()
         self.start_main_loop()
-    
+
     def get_mainscreen(self):
         return self.screen
 
@@ -523,10 +524,10 @@ class MainCoreGui:
         return self.dm.get_username()
 
     ############################################################################
-    ## Methods for internal use 
+    ## Methods for internal use
     def clear_screen(self):
         self.logger.debug("clear_screen called")
-        # rebuild screen with the standard background 
+        # rebuild screen with the standard background
         x, y = self.spgoodies.screenrect.left, self.spgoodies.screenrect.top
         pygame.display.update(self.screen.blit(self.backgroundimage, (0, 0)))
         self.backgr.blit(self.screen.convert(),(0, 0) )
@@ -550,11 +551,11 @@ class MainCoreGui:
             self.usernamelabel.display_sprite()
         if self.activitylabel:
             self.activitylabel.display_sprite()
-    
+
     def load_activity(self, name):
         # This will replace self.activity with the chosen activity
         self.logger.debug("load_activity called with %s" % name)
-        
+
         self.set_framerate()
         try:
             if self.COPmode:
@@ -569,7 +570,7 @@ class MainCoreGui:
                 else:
                     self.enable_info_button()
                     self.infobutton.display_sprite()
-        except (utils.MyError, ImportError, AttributeError), info:
+        except (utils.MyError, ImportError, AttributeError) as info:
             self.logger.exception("Error importing activity %s" % name)
             dlg = Dialog(_("Error importing activity\n%s" % info),dialogwidth=500,  \
                     buttons=[_("OK")], title=_('Error !'))
@@ -577,7 +578,7 @@ class MainCoreGui:
             self.activity = self.menu_saved
             self.activity.refresh_sprites()
             self.start_main_loop()
-        except (utils.MyError, StandardError), info:
+        except (utils.MyError, Exception) as info:
             self.logger.exception("Error constructing activity: %s" % info)
             dlg = Dialog(_("Error constructing activity\n%s" % info), dialogwidth=500, \
                     buttons=[_("OK")], title=_('Error !'))
@@ -612,7 +613,7 @@ class MainCoreGui:
             self.logger.debug("Resetting all sqla sessions")
             self.dm.reset()
             self.start_main_loop()
-            
+
     def start_start(self):
         self.logger.debug("Calling activity start")
         self.statshash['game_start_called'] = True
@@ -621,27 +622,27 @@ class MainCoreGui:
         self.store_data = True
         try:
             self.activity.start()
-        except Exception, info:
+        except Exception as info:
             self.logger.exception("Error in %s start" % self.activity.get_name())
-            raise utils.MyError, info
+            raise utils.MyError(info)
         if 'graph' not in self.excludebuttons:
             # as were datacollectors we also add a chart button to the menubar
             self.chartbutton.enable(True)
-            
+
     def display_levelstart(self, level):
         """Displays a 'ready 3-2-1' screen prior to starting the level.
         It also displays a blocking 'Start' button."""
-          
+
         self.logger.debug("Starting display_levelstart")
-        
+
         if self.cmd_options.no_text or self.cmd_options.nocountdown or self.DTmode:
             return
-                
+
         org_screen = pygame.display.get_surface().convert()
         org_backgr = self.backgr.convert()
 
         self.screen.set_clip()
-        
+
         # disable the dice to prevent users clicking it
         # dim the screen
         sdim = utils.Dimmer(keepalive=0)
@@ -650,11 +651,11 @@ class MainCoreGui:
         txt = _("Starting level %s") % level
         txt_s0 = utils.char2surf(txt, TTFSIZE + 20, fcol=GREEN, ttf=TTF, bold=True)
         self.screen.blit(txt_s0, ((780-txt_s0.get_width()) / 2, 100))
-         
+
         txt = self.activity.get_help()[1]
         txt_s1 = utils.char2surf(txt, TTFSIZE + 2, fcol=GREEN, ttf=TTF, bold=True)
         self.screen.blit(txt_s1, ((780-txt_s1.get_width()) / 2, 200))
-        
+
         txt = utils.txtfmt([_("Hit the 'space' key or a mousebutton to skip the countdown")], 60)
         txtlist = []
         for line in txt:
@@ -663,15 +664,15 @@ class MainCoreGui:
         for s in txtlist:
             self.screen.blit(s, (40, y))
             y += s.get_height()
-        
+
         pygame.display.update()
-        
+
         # we have a animated sprite so we need to adjust the backgr screen
         self.backgr.blit(self.screen, (0, 0))
-        # we re-init the sprite stuff as we use a different background 
+        # we re-init the sprite stuff as we use a different background
         SPInit(self.screen, self.backgr)
         # i is used as a counter. The loop runs at approx 30 times a second so
-        # when i == 30 we decrease the counter.  
+        # when i == 30 we decrease the counter.
         i = 0
         counter = 4# used for 4-3-2-1
         spr = None# will hold the sprite
@@ -708,7 +709,7 @@ class MainCoreGui:
         # reset the screens in SPGoodies so that any activities gets a proper screen.
         SPInit(self.screen, self.backgr)
         pygame.display.update()
-                
+
     def start_next_level(self, store_db=None, nextlevel=None, levelup=False, no_question=False):
         """store_db is used to signal normal ending and that we should store the data"""
         self.logger.debug("start_next_level called with: %s, %s, %s,%s" % (store_db,nextlevel,levelup, no_question))
@@ -741,7 +742,7 @@ class MainCoreGui:
         if self.activity.get_name() != 'menu':
             # Here we fetch our data colletor object, we collect data per level,
             # so it's the best place to start datacollecting
-            # get_mapper returns always an object, in case of anonymous mode the 
+            # get_mapper returns always an object, in case of anonymous mode the
             # object is a fake.
             self.mapper = self.dm.get_mapper(self.activity.get_name())
             self.mapper.insert('level', self.levelcount)
@@ -757,7 +758,7 @@ class MainCoreGui:
                         level = self.DTlevelcount + (self.dicebuttons.get_minimal_level() -1)
                     else:
                         level = self.levelcount
-                    
+
                 if self.activity.get_name() not in ('dltr', 'quiz_general') and self.DTmode:
                     if self.DTlevelscounter > 0:
                         self.DTactivity.refresh_sprites()
@@ -793,20 +794,20 @@ class MainCoreGui:
         except MainEscapeKeyException:
             self.activity.stop_timer()
             raise MainEscapeKeyException
-        except utils.MyError, info:
+        except utils.MyError as info:
             self.logger.error("MyError in %s next_level" % self.activity.get_name())
             self.activity.stop_timer()
-            raise utils.MyError, info
-        except StandardError, info:
+            raise utils.MyError(info)
+        except Exception as info:
             self.logger.exception("StandardError in %s next_level" % self.activity.get_name())
             self.activity.stop_timer()
-            raise utils.MyError, info
-        except Exception, info:
+            raise utils.MyError(info)
+        except Exception as info:
             self.logger.exception("Exception in %s next_level" % self.activity.get_name())
             self.activity.stop_timer()
-            raise utils.MyError, info
-        
-        
+            raise utils.MyError(info)
+
+
     def ask_exit(self):
         self.logger.debug("ask_exit called")
         if not self.cmd_options.noexitquestion:
@@ -841,21 +842,21 @@ class MainCoreGui:
             self.store_stats()
             #pygame.time.wait(1000)# just to show the text in case there are no timers
             raise MainEscapeKeyException # let schoolsplay.py decide what next
-    
+
     def store_stats(self):
         orm, session = self.spgoodies.get_orm('stats', 'user')
         session.query(orm)
         session.add(orm(**self.statshash))
         session.commit()
         session.close()
-        
+
     ###########################################################################
     # Main menubar button callbacks.
-    # These are called when the user hits the buttons in the lower menu bar of 
+    # These are called when the user hits the buttons in the lower menu bar of
     # screen.
     def menubar_cbf(self, sprite, event, data):
         """Callback function for the menubar buttons: quit, info, chart.
-        Here we decide which button has called us and we call the appropriate 
+        Here we decide which button has called us and we call the appropriate
         method for further event handling."""
         self.logger.debug("menubar_button_pressed: %s" % sprite.name)
         if hasattr(self.activity, 'stop_sound'):
@@ -883,12 +884,12 @@ class MainCoreGui:
             elif sprite.name == 'Volume':
                 self.core_volume_button_pressed()
                 self.volumebutton.mouse_hover_leave()
-        except StandardError, info:
+        except Exception as info:
             self.logger.exception("System error: %s" % info)
             self.lock.release()
             self.clear_screen()
-            self.activity.refresh_sprites() 
-        
+            self.activity.refresh_sprites()
+
     def menubar_dice_cbf(self, sprite, event, data):
         """Callback function for the menubar dicebutton."""
         self.logger.debug("core_dice_button_pressed: %s" % data)
@@ -922,14 +923,14 @@ class MainCoreGui:
         if hasattr(self.activity, 'get_extra_info'):
             help.append("%s" % self.activity.get_extra_info())
         buttons = [_("OK")]
-        
+
         if hasattr(self.activity, 'get_moviepath'):
             if os.path.exists(self.activity.get_moviepath()):
                 buttons.append(_("Movie"))
         # make sure all lines can fit the screen
         newlines = utils.txtfmtlines(help, 80)
         dlg = Dialog(newlines, dialogwidth=600, buttons=buttons, \
-                                            title= _("Information about %s") % 
+                                            title= _("Information about %s") %
                                             self.activity.get_helptitle())
         dlg.run()
         if dlg.result[0] == _("Movie"):
@@ -944,14 +945,14 @@ class MainCoreGui:
         self.activity.refresh_sprites()
         self.lock.release()
         return True
-  
+
     def core_volume_button_pressed(self):
         self.myspritesactivated = True
         self.lock.acquire()
-        
+
         dlg = Dialog('',dialogwidth=300, dialogheight=300,  \
                     buttons=[_("Close")], title=_('Set volume level'))
-        
+
         r = dlg.get_action_area()['action_area']
         x, y = r.topleft
         x += 50
@@ -980,7 +981,7 @@ class MainCoreGui:
             p = os.path.join(ACTIVITYDATADIR, 'SPData', 'themes', self.theme, bname)
             hp = os.path.join(ACTIVITYDATADIR, 'SPData', 'themes', self.theme, hbname)
             self.volumebutton = TransImgButton(p, hp,pos, name='Volume')
-        self.volumebutton.connect_callback(self.menubar_cbf, MOUSEBUTTONUP, 'Volume')    
+        self.volumebutton.connect_callback(self.menubar_cbf, MOUSEBUTTONUP, 'Volume')
         self.actives_group.add(self.volumebutton)
         self.menubarbuttons[2] = self.volumebutton
         self.logger.info("setting volume to %s" % self.volume_level)
@@ -991,12 +992,12 @@ class MainCoreGui:
         session.close()
         self.lock.release()
         return True
-        
+
     # Callback for the chart button in the menubar. Passed to SPCoreButtons.ChartButton
     def core_chart_button_pressed(self):
         if not hasattr(self, 'mapper'):
             self.logger.warning("core_chart_button_pressed, no mapper found.")
-            return 
+            return
         self.myspritesactivated = True
         self.lock.acquire()
         if self.DTmode and self.DTactivity.get_name() == 'dltr':
@@ -1008,7 +1009,7 @@ class MainCoreGui:
         # get data, user AND level
         query = mapper._get_level_data(levelnum=self.levelcount)
         # get the score and date data from the objects
-        scorelist = filter(None, [(getattr(item, 'start_time'), getattr(item, 'score')) for item in query])
+        scorelist = [_f for _f in [(getattr(item, 'start_time'), getattr(item, 'score')) for item in query] if _f]
         self.logger.debug("scorelist from SQL query: %s" % scorelist)
         # get the mu and sigma for this activity.
         norm = self.dm.get_mu_sigma(self.activity.get_name())
@@ -1022,7 +1023,7 @@ class MainCoreGui:
         s = Graph(prclist, self.levelcount, norm=norm, headertext=htext)
         dlg = Dialog(s, buttons=[_("OK")], title=_('Results'))
         dlg.run()
-        
+
         result = dlg.get_result()
         if result[0] == _('Save image'):
             name = self.activity.get_name()
@@ -1036,7 +1037,7 @@ class MainCoreGui:
         self.activity.refresh_sprites()
         # and release the lock again
         self.lock.release()
-        
+
     #############################################################################
     # SPGoodies callbacks that are passed to the activity and are used as observers
     # by the maincore. The activity calls one of these callbacks from within the
@@ -1085,14 +1086,14 @@ class MainCoreGui:
     def get_orm(self, tname, dbase):
         self.logger.debug("get_orm called with %s, %s" % (tname, dbase))
         return self.dm.get_orm(tname, dbase)
-    
+
     def activity_pre_level_end(self):
         """The pre_level is ended.
         The core will call next_level on the activity.
         """
         self.logger.debug("activity_pre_level_end called, stopping eventloop")
         self.run_event_loop = False
-    
+
     def activity_level_end(self, store_db=None, nextlevel=1, levelup=False, no_question=False, score_audit=True):
         """The level is ended.
         The core will call next_level on the activity.
@@ -1101,7 +1102,7 @@ class MainCoreGui:
                           (store_db, nextlevel, levelup, no_question))
         # reset any clipping
         self.screen.set_clip()
-        
+
         sc = False
         if hasattr(self,'mapper') and str(self.mapper) != "BogusMapper" and self.activity.get_name() != 'quiz_general':
             self.logger.debug("store dbase data for %s" % self.activity.get_name())
@@ -1139,7 +1140,7 @@ class MainCoreGui:
         else:
             self.logger.debug("not storing or score > 10, nothing committed to dbase")
             self.mapper.close()
-        
+
         if self.DTmode:
             self.DTactivity.act_next_level_stopped(sc)
         # we try to stop any timers or execounter, just in case
@@ -1154,22 +1155,22 @@ class MainCoreGui:
         # add a little pause between levels.
         if not self.cmd_options.no_level_pause:
             p = os.path.dirname(self.core_rc_path)
-            if self.core_rc.has_key('level_change_sound') and self.core_rc['level_change_sound']:
+            if 'level_change_sound' in self.core_rc and self.core_rc['level_change_sound']:
                 snd = utils.load_music(os.path.join(p, self.core_rc['level_change_sound']))
                 snd.play()
-            if self.core_rc.has_key('level_change_image') and self.core_rc['level_change_image']:
+            if 'level_change_image' in self.core_rc and self.core_rc['level_change_image']:
                 img = utils.load_image(os.path.join(p, self.core_rc['level_change_image']))
                 self.screen.blit(img, (275, 200))
                 pygame.display.update()
-            if not self.core_rc.has_key('level_change_pause'):
+            if 'level_change_pause' not in self.core_rc:
                 pause = 0
             else:
                 pause = int(self.core_rc['level_change_pause'])
-            if pause: 
+            if pause:
                 pygame.time.wait(pause*1000)
         self.clear_screen()
         self.start_next_level(store_db=store_db, nextlevel=nextlevel, levelup=levelup, no_question=no_question)
-                
+
     def activity_game_end(self, store_db=True):
         """Tthe game is ended.
         The core will start the menu, delete the activity and cleans the tmp dir.
@@ -1179,27 +1180,27 @@ class MainCoreGui:
         self.store_stats()
         try:
             self.lock.release()# release any locks that were set prior to this
-        except Exception, info:
+        except Exception as info:
             #print info
             pass
         try:
             self.chart_but.erase()
-        except Exception, info:
+        except Exception as info:
             #print info
             pass
         try:
             self.activity.stop_timer()
-        except Exception, info:
+        except Exception as info:
             #print info
             pass
         try:
             self.activity.stop()
-        except Exception,info:
+        except Exception as info:
             #print info
             pass
         try:
             self.execounter.erase()
-        except Exception, info:
+        except Exception as info:
             #print info
             pass
         self.levelcount = 1
@@ -1224,7 +1225,7 @@ class MainCoreGui:
 #        # And tell the garbage collector to free the memory
 #        gc.collect()
         self.dicebuttons.enable(False)
-        
+
         if self.DTmode and self.DTact_is_finished:
             self.DTactivity.act_stopped(self.activity)
             self.DTactivity.dt_restarting()
@@ -1248,7 +1249,7 @@ class MainCoreGui:
         self.run_main_loop = True
         #self.clear_screen()
         self.start_main_loop()
-        
+
     def activity_info_dialog(self, text):
         self.logger.debug("activity_info_dialog called")
         dlg = Dialog(text,buttons=[_('OK')], title=_('Information'), dialogwidth=300)
@@ -1260,7 +1261,7 @@ class MainCoreGui:
         self.logger.debug("display_execounter called")
         self.execounter = ExeCounter((CORE_BUTTONS_XCOORDS[5], 8), total)
         return self.execounter
-        
+
     # Creates a virtual keyboard gui to be used when running in kioskmode
     def get_virtkb(self):
         """return a virtual keyboard object.
@@ -1279,7 +1280,7 @@ class MainCoreGui:
         vkb = VirtualKeyboard(self.screen, fsize, pos)
         self.vtkb = vkb
         return self.vtkb
-    
+
     def set_framerate(self, rate=30):
         """Used by activities to set a lower framerate. Only use this if you
         know why you want to alter the framerate.
@@ -1300,7 +1301,7 @@ class MainCoreGui:
 
     def set_dice_minimal_level(self, level):
         self.dicebuttons.set_minimal_level(level)
-        
+
     # Added to the spgoodies for the menu and dltr activity
     def _menu_activity_userchoice(self, activity, level=None, cycles=None):
         self.logger.debug("menu_activity_userchoice called with act:%s, level:%s, cycles:%s"\
@@ -1311,10 +1312,10 @@ class MainCoreGui:
         else:
             self.menu_saved = self.activity
         self.load_activity(activity)
-        
-    
+
+
     ############################################################################
-    # Here we start the loop. This loop will call activity.start and the calls 
+    # Here we start the loop. This loop will call activity.start and the calls
     # the activity eventloop.
     #
     # The way to get out of the start_main_loop is when the user hits the escape
@@ -1330,7 +1331,7 @@ class MainCoreGui:
     # the activity that calls callbacks, we mean SPGoodies observers.
     # This callback will determine what's next, but in fact were now out of the
     # start_main_loop. If there are more levels the activity_level_end method
-    # will call the activity_loop again. 
+    # will call the activity_loop again.
     #
     # Finally we can break out when the activity is ended because all levels are done.
     # Then the activity will call the callback: activity_game_end (see above)
@@ -1344,10 +1345,10 @@ class MainCoreGui:
     # until the user hits a button.
     # Then the menu will call SPGoodies.menu_activity_userchoice which will end
     # the menu and start the choosen activity.
-    # Then the start_main_loop is called by menu_activity_userchoice and the 
+    # Then the start_main_loop is called by menu_activity_userchoice and the
     # activity is started and the activity_loop is called. This will loop until
     # the activity calls one of the SPGoodies callbacks which will jump out the loop
-    # and determine what's next. 
+    # and determine what's next.
     def start_main_loop(self):
         error = False
         store = True
@@ -1358,7 +1359,7 @@ class MainCoreGui:
                 self.logger.debug("Start activity start")
                 try:
                     self.start_start()
-                except (utils.MyError, utils.StopGameException), info:
+                except (utils.MyError, utils.StopGameException) as info:
                     self.logger.error("%s" % info)
                     self.run_event_loop = False
                     self.run_activity_loop = False
@@ -1378,7 +1379,7 @@ class MainCoreGui:
                 self.run_activity_loop = False
                 self.run_main_loop = False
                 self.store_data = False
-            except utils.MyError, info:
+            except utils.MyError as info:
                 # trouble in paradise
                 self.logger.error("start_main_loop: MyError, %s" % info)
                 self.run_event_loop = False
@@ -1386,7 +1387,7 @@ class MainCoreGui:
                 self.run_main_loop = False
                 error = True
                 self.store_data = False
-            except StandardError, info:
+            except Exception as info:
                 # even more trouble in paradise
                 self.logger.exception("start_main_loop: StandardError, %s, %s" % (self.activity.get_name(), info))
                 self.run_event_loop = False
@@ -1406,7 +1407,7 @@ class MainCoreGui:
                     pass
                 self.logger.warning("Raising SystemExit to quit")
                 raise SystemExit
-                
+
         self.logger.debug("Break out of start_main_loop")
         if self.activity.get_name() != 'menu' or error:
             self.activity_game_end(store_db=self.store_data)
@@ -1420,7 +1421,7 @@ class MainCoreGui:
                 self.activitylabel.display_sprite()
             self.run_main_loop = True
             self.start_main_loop()
-            
+
     def start_pre_level_loop(self):
         # Start the pre_level method once and calls the eventloop.
         self.were_in_pre_level = False
@@ -1442,8 +1443,8 @@ class MainCoreGui:
             self.logger.debug("run_event_loop done")
         self.were_in_pre_level = False
         self.run_activity_loop = True
-        self.run_event_loop = False 
-        
+        self.run_event_loop = False
+
         self.start_activity_loop()
 
     def start_activity_loop(self):
@@ -1456,7 +1457,7 @@ class MainCoreGui:
                 else:
                     levelcount = self.levelcount
                 self.start_next_level(store_db=True, nextlevel=levelcount)
-            except utils.MyError, info:
+            except utils.MyError as info:
                 self.logger.error("Exception raised in the activity %s: %s" % (self.activity.get_name(), info))
                 if self.activity.get_name() == 'menu':
                     self.logger.error('Exception occurred in the menu, quiting')
@@ -1468,7 +1469,7 @@ class MainCoreGui:
                 #self.activity_game_end()
             # block events from entering the queue.
             # Pro: cpu usage drops dramaticly.
-            # Con: gui can't show fancy color changes in the widgets as the 
+            # Con: gui can't show fancy color changes in the widgets as the
             #       mouse passes over them.
 #            if self.activity.get_name() == 'menu':
 #                # we need mousemotion for the tooltips
@@ -1504,7 +1505,7 @@ class MainCoreGui:
                     # Only for debugging memoryleaks
                     #elif event.key == K_F9:
                     #    utils.memory_profile(h)
-                self.actives_group.update(event) 
+                self.actives_group.update(event)
             if self.myspritesactivated:
                 self.myspritesactivated = None
                 continue
@@ -1515,13 +1516,13 @@ class MainCoreGui:
                 # we now fixed this is findit and quizgeneral, for now just leave it
                 # commented out
                 #pygame.event.clear()
-            except utils.StopGameException, info:
+            except utils.StopGameException as info:
                 self.logger.debug("_main_loop, StopGameException")
                 # stop loops
                 self.run_event_loop = False
                 self.run_activity_loop = False
                 self.activity_game_end(store_db=False)
-            except StandardError, info:
+            except Exception as info:
                 self.activity.stop_timer()
                 self.logger.exception("%s raised an unhandled exception: %s traceback follows:" % \
                     (self.activity.get_name(), info))
@@ -1532,7 +1533,7 @@ class MainCoreGui:
                 self.run_event_loop = False
                 self.run_activity_loop = False
                 self.activity_game_end(store_db=False)
-                
+
     #### stuff for beta testers #####################################################
     def start_F1_screen(self):
         import SPDebugDialog
@@ -1543,7 +1544,7 @@ class MainCoreGui:
             db = SPDebugDialog.Debugscreen(self.activity.get_name(), MILESTONE, self.screen)
             actives = SPGroup(self.screen, self.backgr)
             actives.add(db.get_actives())
-            runloop = 1 
+            runloop = 1
             while runloop:
                 pygame.time.wait(100)
                 pygame.event.pump()
@@ -1558,7 +1559,7 @@ class MainCoreGui:
                     if result and result[0][1] == -3:
                         # git pull, restart myself
                         raise utils.RestartMeException
-        except utils.MyError, info:
+        except utils.MyError as info:
             self.activity_info_dialog("There was an error: %s" % info)
         self.screen.blit(org_screen, (0, 0))
         self.backgr.blit(org_back, (0, 0))
@@ -1570,11 +1571,11 @@ if __name__ == '__main__':
     utils.set_locale()# TODO: add lang argument
     try:
         mcgui = MainCoreGui((800, 600))
-    except SystemExit, status:
+    except SystemExit as status:
         if str(status) == '0':
             module_logger.info("clean exit")
         else:
             module_logger.info("not a clean exit")
-    except Exception, status:
+    except Exception as status:
         module_logger.exception("unhandled exception in toplevel, traceback follows:")
-            
+

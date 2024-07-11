@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-import __builtin__
+import builtins
 import imp
 import sys
 from SPConstants import *
@@ -34,7 +34,7 @@ import shutil
 import time
 import datetime
 import types
-import ConfigParser
+import configparser
 import math
 from collections import MutableMapping
 from pygame.constants import *
@@ -105,28 +105,28 @@ def set_locale(lang=None):
                 # FIX locale.py LANGUAGE parsing bug, the fix was added on the
                 # upstream CVS on the 1.28.4.2 revision of 'locale.py', It
                 # should be included on Python 2.4.2.
-                if os.environ.has_key('LANGUAGE'):
+                if 'LANGUAGE' in os.environ:
                     lang = os.environ['LANGUAGE'].split(':')[0]
                 else:
                     lang, enc = locale.getdefaultlocale()
                     lang = "%s.%s" % (lang, enc.lower())
-            except ValueError, info:
+            except ValueError as info:
                 module_logger.error(info)
                 lang = 'en'
         languages = [lang]
-        if os.environ.has_key('LANGUAGE'):
+        if 'LANGUAGE' in os.environ:
             languages += os.environ['LANGUAGE'].split(':')
         module_logger.info("Setting seniorplay locale to '%s' modir: %s" % (lang, LOCALEDIR))
         lang_trans = gettext.translation('childsplay', \
             localedir=LOCALEDIR, \
             languages=languages)
-        __builtin__.__dict__['_'] = lang_trans.ugettext
-    except Exception, info:
+        builtins.__dict__['_'] = lang_trans.ugettext
+    except Exception as info:
         txt = ""
         if lang and lang.split('@')[0].split('.')[0].split('_')[0] != 'en':
             txt = "Cannot set language to '%s' \n switching to English" % lang
             module_logger.info("%s %s" % (info, txt))
-        __builtin__.__dict__['_'] = lambda x:x
+        builtins.__dict__['_'] = lambda x:x
         lang = 'en_US.utf8'
     else:
         lang = lang.split('@')[0]#.split('.')[0].split('_')[0]
@@ -152,13 +152,13 @@ def get_locale():
         # FIX locale.py LANGUAGE parsing bug, the fix was added on the
         # upstream CVS on the 1.28.4.2 revision of 'locale.py', It
         # should be included on Python 2.4.2.
-        if os.environ.has_key('LANGUAGE'):
+        if 'LANGUAGE' in os.environ:
             lang = os.environ['LANGUAGE'].split(':')[0].split('_')[0]
         # This makes sure that we never return a value of None.
         # This is a fix for systems that set LANGUAGE to ''.
         if lang == '':
             lang = locale.getdefaultlocale()[0].split('_')[0]
-    except Exception, info:
+    except Exception as info:
         module_logger.error("%s, %s" % (info, "Switching to English"))
         lang = 'en'
     if lang == 'C' or lang.lower() == 'posix':
@@ -175,13 +175,13 @@ def read_rcfile(path):
     Use this for the activity rc files.
     The core libs have their own specialized rc readers.
     """
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     if not os.path.exists(path):
         module_logger.info("No rc file found at: %s" % path)
         return {}
     try:
         config.read(path)
-    except Exception, info:
+    except Exception as info:
         module_logger.error("Failed to parse rc file: %s" % info)
         return {}
     hash = {}
@@ -206,22 +206,22 @@ def read_unicode_file(path, lines=1):
 def hex2ascii(hc):
     """Converts a hex string representing an char 0-9/a-z into a unicode string.
     Use this only for converting the alphabet soundfile names.
-    'U0031' -> '1'""" 
+    'U0031' -> '1'"""
     if hc[1] == 'U':
         name = hc[1:]
     else:
         name = hc
     i = int(hex(name), 16)
-    text = unichr(i)
+    text = chr(i)
     return text
 
 def ascii2hex(sc):
     """Converts a ascii string representing an char 0-9/a-z into a unicode hex string.
     Use this only for converting the alphabet soundfile names.
     u'1' -> 'U0031'"""
-    if type(sc) is types.UnicodeType:
+    if type(sc) is str:
         sc = str(sc)
-    hs = 'U%s' % (hex(ord(unicode(sc, 'utf8')))[2:].zfill(4))
+    hs = 'U%s' % (hex(ord(str(sc, 'utf8')))[2:].zfill(4))
     return hs
 
 def map_keys(key_map, key):
@@ -238,7 +238,7 @@ def map_keys(key_map, key):
         module_logger.error("No keymap: %s found" % key_map)
         return key
     else:
-        if km.has_key(key):
+        if key in km:
             return km[key]
         else:
             module_logger.error("No key: %s found" % key)
@@ -311,23 +311,23 @@ def load_alphabetsound(char, loc='en'):
         path = os.path.join(ALPHABETDIR, loc, name.upper() + '.ogg')
     snd = load_sound(path)
     return snd
-    
+
 def speak_letter(letter, loc='en'):
     """Plays the alphabet soundfile for @letter.
     @loc is the locale.
     Return True on succes and False on failure"""
     try:
         load_alphabetsound(letter.lower(), loc).play()
-    except Exception, info:
+    except Exception as info:
         module_logger.error("error while trying to play alphabet sounds: %s" % info)
         return False
     else:
         return True
-            
+
 def load_sound(name):
     """Loads a sound -> pygame sound object.
       If no file can be loaded return a dummy class"""
-                
+
     if not pygame.mixer or not pygame.mixer.get_init():
         module_logger.info('Cannot load sound: %s, no mixer initialized' % name)
         module_logger.info('Using Nonesound')
@@ -350,7 +350,7 @@ def load_music(file):
      music source. This function returns a filename wrapped in a sound like object with
      a play and stop method.
      For multiple sources use the pygame.Sound and wave combination.
-     """    
+     """
     if not pygame.mixer or not pygame.mixer.get_init():
         module_logger.info('Cannot load sound: %s, no mixer initialized' % file)
         return NoneSound()
@@ -362,10 +362,11 @@ def load_music(file):
         playmusic = MusicObject(file)
 
     return playmusic
-    
-def aspect_scale(img,(bx,by)):
+
+def aspect_scale(img, xxx_todo_changeme):
     """ Scales 'img' to fit into box bx/by.
      This method will retain the original image's aspect ratio """
+    (bx,by) = xxx_todo_changeme
     ix,iy = img.get_size()
     if ix > iy:
         # fit to width
@@ -398,7 +399,7 @@ def grayscale_image(surf):
             gs_color = (L, L, L, alpha)
             surf.set_at((x, y), gs_color)
     return surf
-    
+
 def load_image(file, transparent=0, theme='childsplay'):
     """loads an image and convert it.
     When a theme is set it will try to load the image from the theme directory
@@ -407,7 +408,7 @@ def load_image(file, transparent=0, theme='childsplay'):
     The color of the pixel located at 0,0 in your image will be taken as the trans layer.
     If you have a image with an alpha channel set transparent to 0 nd alpha to 1.
     ATTENTION, if you planning to rotate your image DON'T use alpha, it will crash pygame."""
-    
+
     if theme and theme != 'childsplay':
         path, name = os.path.split(file)
         path = os.path.join(path, theme, name)
@@ -441,7 +442,7 @@ def char2surf(char, fsize, fcol=None, ttf='arial', bold=False, antialias=True, s
     char must be a string. Returns the surface.
     @ttf must be a fontname installed on the system
     When you supply a name ending on '.ttf' a truetype font path is assumed and
-    the pygame font renderer is used. 
+    the pygame font renderer is used.
     @split indicates the length of the strings. When it's set to 0, the default,
     it will not split the string and the surface will be returnt.
     When split > 0 a list with surfaces is returnt.
@@ -467,7 +468,7 @@ def char2surf(char, fsize, fcol=None, ttf='arial', bold=False, antialias=True, s
         return items
     else:
         return items[0]
-    
+
 def text2surf(word, fsize, fcol=None, ttf=None, sizel=None, bold=False, antialias=True):
     """Renders a text in a surface and returns a surface,size list of the items
     sizelist is a list like this [(7,17),(10,17)] tuples are x,y size of the character."""
@@ -483,20 +484,20 @@ def text2surf(word, fsize, fcol=None, ttf=None, sizel=None, bold=False, antialia
         try:
             font = pangofont.PangoFont(family=ttf, size=fsize)
             font.set_bold(bold)
-        except Exception, info:
+        except Exception as info:
             module_logger.error('%s. Using standard pygame font' % info)
             font = pygame.font.Font(None, fsize)
             s = font.render(word, True, fcol)
         else:
             try:
                 s = font.render(word, True, fcol, None)# none means trasparent
-            except Exception, info:
+            except Exception as info:
                 module_logger.exception("Failed to render SDL font: %s" % info)
                 return
     if sizel:
         sizelist = font.size(word)
     else:
-        sizelist = map(font.size, word)
+        sizelist = list(map(font.size, word))
     return s, sizelist
 
 def Ipl2NumPy(img):
@@ -520,7 +521,7 @@ def find_files(directory, patternlist):
     """Generator function to search files that match a certain pattern.
     patternlist must be a list of patterns.
     Usage: for file in find_files('topdir','*.foo'):
-                print 'found:',file 
+                print 'found:',file
     """
     for root, dirs, files in os.walk(directory):
         for pattern in patternlist:
@@ -551,12 +552,12 @@ Usage:
 dim=Dimmer(keepalive=1)
   Creates a new Dimmer object,
   if keepalive is true, the object uses the same surface over and over again,
-  blocking some memory, but that makes multiple undim() calls possible - 
+  blocking some memory, but that makes multiple undim() calls possible -
   Dimmer can be 'abused' as a memory for screen contents this way..
 
 dim.dim(darken_factor=64, color_filter=(0,0,0))
   Saves the current screen for later restorage and lays a filter over it -
-  the default color_filter value (black) darkens the screen by blitting a 
+  the default color_filter value (black) darkens the screen by blitting a
   black surface with alpha=darken_factor over it.
   By using a different color, special effects are possible,
   darken_factor=0 just stores the screen and leaves it unchanged
@@ -572,7 +573,7 @@ dim.undim()
             self.buffer = pygame.Surface(pygame.display.get_surface().get_size())
         else:
             self.buffer = None
-        
+
     def dim(self, darken_factor=64, color_filter=(0, 0, 0)):
         if not self.keepalive:
             self.buffer = pygame.Surface(pygame.display.get_surface().get_size())
@@ -595,7 +596,7 @@ dim.undim()
             pygame.display.update()
             if not self.keepalive:
                 self.buffer = None
-    
+
 class MazeGen:
     """  Perfect maze generator, based on the Mazeworks algorithm.(adapted for Packid)
   Constuctor takes two uneven integers eg rows,cols. If the rows/cols are even
@@ -605,7 +606,7 @@ class MazeGen:
   maze is a tuple with tuples representing a grid where a 0 stands for a wall,
   and 1 for a room. The outer walls are also zeros.
   """
-              
+
     def __init__(self, rows, cols):
         rows = rows-(rows % 2 == 0)
         cols = cols-(cols % 2 == 0)
@@ -613,20 +614,20 @@ class MazeGen:
         for r in range(rows):
             self.matrix.append(([0] * cols))
         self._make_maze()
-    
+
     def _make_maze(self):
         import random
         cellstack = []
         maxrow = len(self.matrix)
-        row = random.choice(range(1, maxrow, 2))
+        row = random.choice(list(range(1, maxrow, 2)))
         maxcol = len(self.matrix[0])
-        col = random.choice(range(1, maxcol, 2))
+        col = random.choice(list(range(1, maxcol, 2)))
         #print 'start row,col',row,col
         maxcol -= 3
         maxrow -= 3
-        
+
         self.matrix[row][col] = 1
-        
+
         nextcell = []
         while 1:
             nextcell = []
@@ -639,7 +640,7 @@ class MazeGen:
                 nextcell.append(((row + 1, col), (row + 2, col)))
             if row > 2 and self.matrix[row-2][col] == 0:
                 nextcell.append(((row-1, col), (row-2, col)))
-            
+
             if nextcell:
                 next = random.choice(nextcell)
                 # knock down the wall
@@ -647,7 +648,7 @@ class MazeGen:
                 self.matrix[next[1][0]][next[1][1]] = 1
                 cellstack.append(((row, col)))# stack old cell
                 row, col = next[1][0], next[1][1]
-                
+
             else:# Backtrack our steps
                 try:
                     row, col = cellstack.pop()
@@ -656,7 +657,7 @@ class MazeGen:
                     break
         self.matrix[-2][-2] = 2
         self.matrix[-1][-2:] = [1, 1]
-        
+
     def get_maze(self):
         grid = tuple(map(tuple, self.matrix))
         return grid
@@ -671,16 +672,16 @@ def import_module(filename, globals=None, locals=None, fromlist=None):
         pass
     path, name = os.path.split(filename)
     name, ext = os.path.splitext(name)
-    fp = None    
+    fp = None
     try:
         fp, pathname, description = imp.find_module(name, [path])
         return imp.load_module(name, fp, pathname, description)
         if fp: fp.close()
-    except (StandardError, MyError), info:
+    except (Exception, MyError) as info:
         module_logger.exception("Import of %s failed" % filename)
-        raise MyError, info
+        raise MyError(info)
         if fp: fp.close()
-    
+
 def txtfmt(text, split):
     """ Formats a list of strings in a list of strings of 'split' length.
        returns a new list of strings.
@@ -711,7 +712,7 @@ class ScaleImages:
                     case you can't use stdCard. If you set it to None you MUST pass a
                     surface to the get_images method.
                     This way you can use it to construct a scaler and each time pass
-                   a surface to get_images which will be blitted on the stdCardObj. 
+                   a surface to get_images which will be blitted on the stdCardObj.
         stdCardObj = None means no blitting on card, just return
                    the scaled images. Else the images are blitted on this object.
         TargetSize = desired scale size (tuple)
@@ -723,34 +724,34 @@ class ScaleImages:
             # in case of error, we don't use a card back
             # just return scaled images.
             border = 10 # border size of card (memory), 2 * border size
-            try: 
+            try:
                 self.stdCard = stdCardObj
                 # scale the card also to TargetSize, so we use one card for everything
                 self.scaled_card = self._scale_if_needed(self.stdCard)
                 self.TargetSize.inflate_ip(-border, -border)# reduce the size of the rect, so the images are smaller
                     # then the card (compensate for border)
-            except StandardError, info:
+            except Exception as info:
                 self.logger.exception("Failed to scale stdCardObj:%s, %s" % (stdCardObj, info))
                 self.stdCard = None
         else:
             self.stdCard = None #to use as a test later, if we gonna blit the img on a card or not
                 # see get_images
         self.imgObjects = imgObjects
-        
+
     def get_images(self, image=None):
         """ This returns a list with scaled images, blitted on a card if
          it was parsed to the class constructor.
          When image is a surface image is scaled on a card and returnt in list of one
         """
-        if type(self.imgObjects) == types.DictType:
+        if type(self.imgObjects) == dict:
             # This won't work in combination with stdCard
             imgs = {}
-            for k, v in self.imgObjects.items():
+            for k, v in list(self.imgObjects.items()):
                 imgs[k] = self._scale_if_needed(v)
             return imgs
         if image:
             self.imgObjects = (image, )
-        imgs = map(self._scale_if_needed, self.imgObjects) #this returns always a surface, scaled or not
+        imgs = list(map(self._scale_if_needed, self.imgObjects)) #this returns always a surface, scaled or not
         if self.stdCard:# we have a blanc card to blit the images on
             card_imgs = []
             for img in imgs:
@@ -765,8 +766,8 @@ class ScaleImages:
                 card.blit(img, center_pos)
                 card_imgs.append((card))
             imgs = card_imgs[:]# a real copy, just to be sure :-)
-        return imgs   
-        
+        return imgs
+
     def _scale_if_needed(self, img):
         """ We only scale down, not up because the result of upscaling sucks"""
             # Remember, TargetSize is a pygame rect (contains is a method of Rect)
@@ -774,21 +775,21 @@ class ScaleImages:
             return self._scale_card(img)
         else:
             return img  #not changed!
-            
+
     def _scale_card(self, img):
         """ This does the actual scaling and returns a scaled SDL surface."""
         imgSize = img.get_size()
-        
+
         # we assume TargetSize = x == y, a square
         # TODO XXX what if Target not a square ??
-        if (imgSize[0] > imgSize[1]):# which one should we divide to get the longest side within the TargetSize 
+        if (imgSize[0] > imgSize[1]):# which one should we divide to get the longest side within the TargetSize
             scale_ratio = float(imgSize[0]) / self.TargetSize[2]# TargetSize is a rect -> (x,y,x-size,y-size)
         else:
             scale_ratio = float(imgSize[1]) / self.TargetSize[3]
-                           
+
         scale_x = int(imgSize[0] / scale_ratio)
         scale_y = int(imgSize[1] / scale_ratio)
-        
+
         scaled_img = pygame.transform.scale(img, (scale_x, scale_y))
         return scaled_img
 
@@ -797,7 +798,7 @@ class GfxCursor:
     """
     Replaces the normal pygame cursor with any bitmap cursor.
     This is a nice little GfxCursor class that gives you arbitrary mousecursor
-    loadable from all SDL_image supported filetypes. 
+    loadable from all SDL_image supported filetypes.
 
     Author: Raiser, Frank aka CrashChaos (crashchaos at gmx.net)
     Author: Shinners, Pete aka ShredWheat
@@ -821,7 +822,7 @@ class GfxCursor:
 
 
     That's it. Have fun with your new funky cursors.
-    
+
 
     """
 
@@ -838,7 +839,7 @@ class GfxCursor:
         self.bg      = None
         self.offset  = 0, 0
         self.old_pos = 0, 0
-        
+
         if cursor:
             self.setCursor(cursor, hotspot)
             self.enable()
@@ -908,7 +909,7 @@ class GfxCursor:
         self.old_pos = event.pos
 
 
-        
+
 def current_time():
     """Maincore uses this to get the current time to set the 'time_start'
     and 'time_end' values in the dbase table"""
@@ -979,7 +980,7 @@ def _set_lock(timeout=10):
         module_logger.debug("Lock set to %s" % t)
         f.close()
         return True
-    
+
 def _remove_lock():
     """Used to cleanup any locks"""
     module_logger.info("Removing master lock")
@@ -989,32 +990,32 @@ def _remove_lock():
         except IOError:
             module_logger.exception("failed to remove master lockfile")
             module_logger.error("Please remove lock file: % manually" % LOCKFILE)
-    
+
 def score2percentile(s_list, mean, sd):
     """Returns the percentile in a list with the coresponding dates
     calculated from the given parameters.
     @s_list is a list with tuples: [(date,score),(date,score)....]
     @mean is an float holding the mean from the dbase
     @sd is an float holding the sd from the dbase
-    
+
     The z - Score is simply the number of Standard Deviation units a student's
     raw score is above or below the mean.  It has a one-to-one relationship with
-    the standard deviation unit; 
+    the standard deviation unit;
     one z-score unit = one standard deviation unit and a z-score of zero is the mean.
-    Further discussion of the standard deviation unit as well as it's use in 
+    Further discussion of the standard deviation unit as well as it's use in
     analyzing student scores is beyond the scope of this document.
-    The z - Score is arrived at by taking the raw score for a student,  
-    subtracting the mean (average) of all student scores and dividing by 
+    The z - Score is arrived at by taking the raw score for a student,
+    subtracting the mean (average) of all student scores and dividing by
     the standard deviation of the student raw scores.
-    
+
     zS = (RS - Mean) / SD
     Where:
     zS is the z - Score for the Student
     RS is the student's raw score
     Mean is the mean (average) of the student raw scores
     SD is the Standard Deviation of the student raw scores.
-    
-    Then we find the percentile in a hash table and multiply it by 10 to get a 
+
+    Then we find the percentile in a hash table and multiply it by 10 to get a
     nice value to display.
     """
     module_logger.debug("score2percentile called with:%s,%s,%s" % (s_list, mean, sd))
@@ -1033,7 +1034,7 @@ def score2percentile(s_list, mean, sd):
         module_logger.debug("rs: %s, mean:%s, sd:%s, zscore:%s, percentile:%s" % (rs, mean, sd, zs, prc))
         new_s_list.append((date, prc))
     return new_s_list
-    
+
 class OrderedDict(dict, MutableMapping):
     # Taken from Python 2.7, runs also on python  >= 2.4.
     # Methods with direct access to underlying attributes
@@ -1086,7 +1087,7 @@ class OrderedDict(dict, MutableMapping):
     items = MutableMapping.items
 
     def __repr__(self):
-        pairs = ', '.join(map('%r: %r'.__mod__, self.items()))
+        pairs = ', '.join(map('%r: %r'.__mod__, list(self.items())))
         return '%s({%s})' % (self.__class__.__name__, pairs)
 
     def copy(self):
@@ -1117,4 +1118,4 @@ class OrderedDict(dict, MutableMapping):
 #    WEAREPRODUCTION = '0'
 WEAREPRODUCTION = '1'
 
-    
+

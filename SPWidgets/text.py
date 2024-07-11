@@ -18,17 +18,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-from base import Widget
+from .base import Widget
 from SPConstants import *
 from SPSpriteUtils import SPSprite
 import utils
 import pygame
 from pygame.constants import *
 import types
-from funcs import render_textrect
+from .funcs import render_textrect
 if not NoGtk:
     import pangofont
-    
+
 class Label(Widget):
     def __init__(self, txt, pos, fsize=18, padding=4, border=None, maxlen=0, name='', bold=False, transparent=False, ** kwargs):
         """Label which displays a line of text
@@ -40,28 +40,28 @@ class Label(Widget):
         border - Integer. Draw a border around the label.
         name - string to indicate this object
         bold - set font to bold.
-        
+
         Theres also a number of keyword arguments understood by this widget;
         fgcol - foreground color (other than the theme color)
         bgcol - Background color.
         minh - Minimal height of the widget.
         transparent - No background.
-        """ 
+        """
         Widget.__init__(self)
         self.fsize = fsize
         self.bold=bold
         self.transparent = transparent
         fgcol = self.THEME['label_fg_color']
         bgcol = self.THEME['label_bg_color']
-        if kwargs.has_key('fgcol'):
+        if 'fgcol' in kwargs:
             fgcol = kwargs['fgcol']
-        if kwargs.has_key('bgcol'):
+        if 'bgcol' in kwargs:
             bgcol = kwargs['bgcol']
-        if kwargs.has_key('minh'):
+        if 'minh' in kwargs:
             self.minh = kwargs['minh']
         else:
             self.minh = None
-        if kwargs.has_key('ttf'):
+        if 'ttf' in kwargs:
             self.ttf = kwargs['ttf']
         else:
             self.ttf = TTF
@@ -75,7 +75,7 @@ class Label(Widget):
         self.rect  = self.image.get_rect()
         SPSprite.__init__(self, self.image)
         self.rect.move_ip(pos)
-        
+
     def settext(self, txt):
         self._txt = txt
         s = utils.char2surf(txt, fsize=self.fsize,ttf=self.ttf, fcol=self.fgcol, bold=self.bold)
@@ -109,12 +109,12 @@ class TextView(Widget):
     def __init__(self, txt, pos, rect=None, fsize=12, padding=4, \
                  autofit=False, border=False, name='', \
                  bgcol=None, fgcol=None, shade=0, bold=False, **kwargs):
-        """Box which displays a text, wrapped if needed. 
+        """Box which displays a text, wrapped if needed.
         txt - string to display. When txt is a list of strings the lines are
             blitted on a surface big enough to hold the longest line.
             rect is not used in this case.
         pos - position to display the box
-        rect - Rect indicating the size of the box. 
+        rect - Rect indicating the size of the box.
                 Only used in conjunction with txt if it's a string.
         fsize - Font size
         padding - space in pixels around the text
@@ -126,15 +126,15 @@ class TextView(Widget):
         shade - The amount of "3D shade" the text should have, 0 means no shade.
                 Beware that shading takes time.
         """
-        if not fgcol: 
+        if not fgcol:
             fgcol = self.self.THEME['textview_fg_color']
         if not bgcol:
             bgcol = self.self.THEME['textview_bg_color']
-        if type(txt) in types.StringTypes and rect != None:
+        if type(txt) in (str,) and rect != None:
             self.image = render_textrect(txt, fsize, TTF, rect, fgcol, \
                               bgcol, justification=0, bold=bold, \
                               autofit=autofit, border=border)
-        elif txt and type(txt) is types.ListType:
+        elif txt and type(txt) is list:
             ll = []
             w = 0
             for line in txt:
@@ -144,8 +144,8 @@ class TextView(Widget):
                 ll.append(s)
                 if s.get_rect().w > w:
                     w = s.get_rect().w
-                
-            h = s.get_rect().h   
+
+            h = s.get_rect().h
             if bgcol == 'trans':
                 self.image = pygame.Surface((w, h * len(ll)), SRCALPHA)
                 self.image.fill((0, 0, 0, 0))
@@ -156,10 +156,10 @@ class TextView(Widget):
             for s in ll:
                 self.image.blit(s, (x, y))
                 y += h
-            
+
         self.rect  = self.image.get_rect()
         Widget.__init__(self, self.image)
-        self.rect.move_ip(pos)       
+        self.rect.move_ip(pos)
 
 class SimpleView(Widget):
     """Simple object that displays a numbers of strings.
@@ -169,7 +169,7 @@ class SimpleView(Widget):
         Use the TextView for proper text display."""
     def __init__(self, rect, fsize, bgcol=None, fgcol=None, padding=8, border=2, lines=1):
         """Starts empty, use set_text to fill it.
-        rect - Rect indicating the size of the box and position. 
+        rect - Rect indicating the size of the box and position.
         fsize - Font size
         fgcol - text color (R,G,B), if None the theme color will be used.
         bgcol - background color (R,G,B), if None the theme color will be used.
@@ -178,7 +178,7 @@ class SimpleView(Widget):
         border - border in pixels, None means no border.
         lines - how many previous lines of text should be visible (cheap scroll effect)
                 """
-        if not fgcol: 
+        if not fgcol:
             fgcol = self.THEME['textview_fg_color']
         if not bgcol:
             bgcol = self.THEME['textview_bg_color']
@@ -196,7 +196,7 @@ class SimpleView(Widget):
         self.rect.move_ip(rect.topleft)
         self.prevlines = []
         self.lines = lines
-    
+
     def set_text(self, text):
         """Add one line of text."""
         self.prevlines.append(text)
@@ -264,7 +264,7 @@ class TextEntry(Widget):
         self.ypadding = 0
         if self.message:
             self._remove_prompt()
-        
+
     def _cbf(self, widget, event, data):
         if event.type == MOUSEBUTTONDOWN:
             self._add_prompt()
@@ -273,17 +273,17 @@ class TextEntry(Widget):
                 self.backspace()
             elif event.key == K_RETURN:
                 return self.get_text()
-            elif event.unicode and ord(event.unicode) > 31:
+            elif event.str and ord(event.str) > 31:
                 if self.validationlist:
-                    if event.unicode in self.validationlist:
-                        self.add(event.unicode)
+                    if event.str in self.validationlist:
+                        self.add(event.str)
                 else:
-                    self.add(event.unicode)
-    
+                    self.add(event.str)
+
     def _add_prompt(self):
         self.image.blit(self.orgimage, (0, 0))
         self.draw()
-    
+
     def _remove_prompt(self):
         self.image.blit(self.orgimage, (0, 0))
         self.messagesurf = utils.char2surf(self.message, self.fsize, self.fgcol, bold=self.bold)
@@ -295,11 +295,11 @@ class TextEntry(Widget):
             return
         self.message += c
         self.draw()
-        
+
     def backspace(self):
         self.message = self.message[:-1]
         self.draw()
-    
+
     def draw(self):
         if self.password_mode:
             self.messagesurf = utils.char2surf('*' * len(self.message) +'_', self.fsize, self.fgcol, bold=self.bold)
@@ -311,12 +311,12 @@ class TextEntry(Widget):
         else:
             self.message = self.message[:-1]
         self.display_sprite()
-     
+
     def clear(self):
         self.image.blit(self.orgimage, (0, 0))
         self.message = ""
         self.display_sprite()
-        
+
     def get_text(self):
         txt = self.message.strip()
         try:
@@ -330,16 +330,16 @@ class TextEntry(Widget):
             else:
                 return ''
         return txt
-    
+
     def set_text(self,txt):
         self.message = txt
-        self._remove_prompt() 
-        
+        self._remove_prompt()
+
     def get_surface(self):
         return self.image
 
 class TEB_TextEntry(TextEntry):
-    """This eidget is used internally by the TextEntryBox. 
+    """This eidget is used internally by the TextEntryBox.
     Don't use this in your code, use the TextEntry
     """
     __current = None
@@ -351,11 +351,11 @@ class TEB_TextEntry(TextEntry):
                         password_mode=password_mode)
         self.logger = logging.getLogger("childsplay.SPWidgets_lgpl.TEB_TextEntry")
         self._TEfocus = False
-    
+
     def _cbf(self, widget, event, data):
         pass
-   
-        
+
+
 class TextEntryBox(Widget):
     def __init__(self, pos, maxlen=0, length=300, height=2, message='', fsize = 14, border=True, \
                  ttf='arial', fgcol=None, bgcol=None, bold=False, password_mode=False):
@@ -393,15 +393,15 @@ class TextEntryBox(Widget):
         self.image = pygame.Surface((sizex + 2, sizey + 2))
         Widget.__init__(self, self.image)
         self.image.fill(self.THEME['textentry_bg_color'])
-        
+
         y = 0
-        for te in self.TEs.values():
+        for te in list(self.TEs.values()):
             self.image.blit(te.get_surface(), (0, y))
             y += te.get_sprite_height()
         if border:
             pygame.draw.rect(self.image, BLACK, self.rect, 1)
         self.moveto(pos)
-        
+
     def _cbf(self, widget, event, data):
         if event.type == MOUSEBUTTONDOWN:
             if TEB_TextEntry._TEB_TextEntry__current:
@@ -421,11 +421,11 @@ class TextEntryBox(Widget):
                     newwidget = self.TEs[self.currentline]
                     newwidget._add_prompt()
                     TEB_TextEntry._TEB_TextEntry__current = newwidget
-            elif event.unicode and ord(event.unicode) > 31:
-                widget.add(event.unicode)
-    
+            elif event.str and ord(event.str) > 31:
+                widget.add(event.str)
+
     def get_text(self):
-        return [te.get_text() for te in self.TEs.values()]
-        
+        return [te.get_text() for te in list(self.TEs.values())]
+
     def get_actives(self):
-        return self.TEs.values()
+        return list(self.TEs.values())

@@ -57,9 +57,9 @@ def check_tables(dbase):
     # first check the quizcontent dbase and add any missing table.
     logger = logging.getLogger("childsplay.SPContentTables.check_tables")
     logger.debug("Sync quiz content dbase: %s" % dbase)
-    
+
     contentdir = os.path.join(ACTIVITYDATADIR,'CPData','Quizcontent', '*', 'content_*.xml')
-    
+
     con = sqlite3.connect(dbase)
     cursor = con.cursor()
     cursor.execute(''' SELECT name FROM sqlite_master
@@ -68,14 +68,14 @@ def check_tables(dbase):
                             ''')
     tl = [tn[0] for tn in cursor.fetchall()]
     contentfiles = glob.glob(contentdir)
-    
+
     path_types = {}
     for f in contentfiles:
         lang = f.rsplit('/',2)[-2]
         tp = os.path.basename(f).split('_')[1][:-4]
         path_types[f] = tp + '_%s' % lang
-    
-    for t in path_types.values():
+
+    for t in list(path_types.values()):
         if t not in tl:
             logger.debug("Creating table '%s'" % t)
             # group is named _group as group is a reserved word in sqlite3
@@ -89,19 +89,19 @@ def check_tables(dbase):
                     data TEXT, year TEXT, _group TEXT) 
                     ''' % t)
             con.commit()
-            for p, pt in path_types.items():
+            for p, pt in list(path_types.items()):
                 if pt == t:
                     break
             if parse_xml(p, cursor, t):
                 con.commit()
-            
+
     if 'adler32' not in tl:
         logger.debug("Creating table '%s'" % 'adler32')
         cursor.execute(''' CREATE TABLE %s
                     ( id INTEGER PRIMARY KEY, path TEXT, sum INTEGER, type TEXT) 
                     ''' % 'adler32')
     con.commit()
-    
+
     # Now we know we have all the tables we gonna check the checksums
     cursor.execute(''' SELECT * FROM adler32 ''')
     rowlist = cursor.fetchall()
@@ -125,7 +125,7 @@ def check_tables(dbase):
         # just to make sure
         close_dbase(con)
         return
-    else: 
+    else:
         # if we have rows check that we have rows for each content file.
         # The actual files present on disk are leading for this.
         tp = [t[1] for t in rowlist]
@@ -172,22 +172,22 @@ def check_tables(dbase):
                 con.commit()
     # just to make sure
     close_dbase(con)
-    
+
 def close_dbase(con):
     logger = logging.getLogger("childsplay.SPContentTables.close_dbase")
     logger.debug("Commiting transactions and closing dbase.")
-    con.commit()    
-    con.close()    
-    
+    con.commit()
+    con.close()
+
 def parse_xml(xml, cursor, tname):
     """Parses the whole xml tree into a hash with lists. Each list contains hashes
     with the elelements from a 'question' element.
     When year is set only the entries that have a year element and whos value
     is between 'year' and 'year'+9 is put into the hash.
-    This is used by the history activity."""  
+    This is used by the history activity."""
     logger = logging.getLogger("childsplay.SPContentTables.parse_xml")
     logger.debug("Starting to parse: %s" % xml)
-    
+
     #     xml file:
     #    <?xml version="1.0" encoding="utf-8"?>
     #    <questions>
@@ -201,7 +201,7 @@ def parse_xml(xml, cursor, tname):
     #                                           answer2>
     #                <wrong_answer3 audio="">Een grote Belg</wrong_answer3>
     #        </question>
-    #       ..... 
+    #       .....
     tree = ElementTree()
     tree.parse(xml)
     xml = {}
@@ -217,24 +217,24 @@ def parse_xml(xml, cursor, tname):
         try:
             hash['content_id'] = q.get('id')
             hash['content_type'] = q.get('type')
-            
+
             e = q.find('difficulty')
             hash['difficulty'] = e.text
-            
+
             e = q.find('data')
             hash['data'] = e.text
-            
+
             e = q.find('group')
             hash['_group'] = e.text
-            
+
             e = q.find('question_text')
             hash['question_text'] = e.text
             hash['question_audio'] = e.get('audio')
-            
+
             e = q.find('answer')
             hash['answer'] = e.text
             hash['answer_audio'] = e.get('audio')
-            
+
             e = q.find('wrong_answer1')
             hash['wrong_answer1'] = e.text
             hash['wrong_answer1_audio']  = e.get('audio')
@@ -249,8 +249,8 @@ def parse_xml(xml, cursor, tname):
                 e = q.find('year')
                 hash['year'] = e.text
             except:
-                hash['year'] = ''           
-        except AttributeError, info:
+                hash['year'] = ''
+        except AttributeError as info:
             logger.error("The content.xml is badly formed, missing element(s):%s,%s" % (info, e))
             logger.error("question '%s' will be removed from the collection" % q.get('id'))
         else:
@@ -265,14 +265,14 @@ def parse_xml(xml, cursor, tname):
                             ) ''' % tname , hash)
     logger.debug("Done parsing %s questions" % index)
     return True
-    
+
 if __name__ == '__main__':
     import SPLogging
     SPLogging.set_level('debug')
     SPLogging.start()
-    
+
     lang = 'nl'
     dbase = os.path.join(HOMEDIR, 'quizcontent.db')
     contentdir = os.path.join(ACTIVITYDATADIR,'CPData','Quizcontent', lang, 'content_*.xml')
     check_tables(dbase, contentdir, lang)
-      
+

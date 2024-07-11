@@ -58,9 +58,9 @@ class ParseMenu:
         root = self.tree.getroot()
         rootdefault = root.get('defaultsubmenu')
         menuhash = {'menudefault':rootdefault}
-        
+
         submenus = self.tree.findall('submenu')
-        
+
         for sub in submenus:
             menlist = []
             subicon = sub.get('file')
@@ -98,17 +98,17 @@ class ParseMenu:
                 menlist.append((menicon, menhicon, menpos, menact, mentext, enabled))
             menuhash[((subicon, subhicon), subpos)] = menlist
         self.menuhash = {}
-        for k, v in menuhash.items():
+        for k, v in list(menuhash.items()):
             if k == 'menudefault':
                 self.menuroot = v
             else:
                 self.menuhash[k] = v
-                        
+
     def get_menu(self):
         return self.menuhash
     def get_menudefault(self):
         return self.menuroot
-      
+
 class Menu:
     def __init__(self, iconpath, menu, cbf, theme, lang, default, removeables=None):
         self.logger = logging.getLogger("childsplay.SPMenu.Menu")
@@ -126,16 +126,16 @@ class Menu:
         # It's possible to have localized menu act buttons.
         # First we look if there's a subdir in /lib/SPData/<theme>/menuicons named
         # to the current locale, eg /lib/SPData/<theme>/menuicons/nl for dutch.
-        # If so we use those icons, if not we use the default ones in 
+        # If so we use those icons, if not we use the default ones in
         # /lib/SPData/<theme>/menuicons/
         # If there's a localized subdir we use it, missing icons are replaced with the default ones.
         if os.path.exists(os.path.join(iconpath, lang)):
             iconpath = os.path.join(iconpath, lang)
         max_x = 790
         x_padding =50
-        for k, v in menu.items():
+        for k, v in list(menu.items()):
             #self.logger.debug("building menu item: %s,%s" % (k, v))
-            x, y = 50, 110 # start coords when theres no position given for the menu buts  
+            x, y = 50, 110 # start coords when theres no position given for the menu buts
             for t in v:
                 if os.path.splitext(t[0])[0].rstrip('.icon') in self.removeables:
                     continue
@@ -152,7 +152,7 @@ class Menu:
                     pos = (x, y)
                 else:
                     pos = t[2]
-                print t
+                print(t)
                 if t[4]:
                     try:
                         txt = getattr(acttext, t[3])
@@ -161,7 +161,7 @@ class Menu:
                         b = ImgButton(p, pos, name=t[3])
                     else:
                         b = ImgTextButton(p, _(txt) ,pos, padding=6, fsize=14, name=t[3])
-                else:    
+                else:
                     if theme['menubuttons'] == 'transparent':
                         b = TransImgButton(p, hp, pos, name=t[3])
                     else:
@@ -173,14 +173,14 @@ class Menu:
                 if x > max_x - b.get_sprite_width():
                     x = 50
                     y += 140
-                if buttons.has_key(k):
+                if k in buttons:
                     buttons[k].append(b)
                 else:
                     buttons[k] = [b]
         # here we construct the category buttons
-        # first we must determine which button list belongs to the left 
-        x , y = 0, 532 # start coords when theres no position given for the submenu buts  
-        for k, v in buttons.items():
+        # first we must determine which button list belongs to the left
+        x , y = 0, 532 # start coords when theres no position given for the submenu buts
+        for k, v in list(buttons.items()):
             p0 = os.path.join(iconpath, 'submenu', k[0][0])
             p1 = os.path.join(iconpath, 'submenu', k[0][1])
             if k[1][0] == -1:
@@ -196,17 +196,17 @@ class Menu:
             b.set_use_current_background(True)
             b.connect_callback(cbf, MOUSEBUTTONUP, v)
             self.buttonslist.append(b)
-            
+
     def _set_default_buttons(self, blist):
         self.defaultbuttonslist = blist
     def get_default_buttons(self):
         return (self.defaultbutton, self.defaultbuttonslist)
     def get_buttons(self):
         return self.buttonslist
-    
+
 class Activity:
     """  This provides the activity menu internally used by MainCore.
-    
+
     It's much like an 'regular' activity but it is called differently
     """
     def __init__(self, copmode=False, showpersonalquiz=False, showlocalquiz=False):
@@ -223,8 +223,8 @@ class Activity:
         if not showpersonalquiz:
             self.removeables.append('quiz_personal')
         if not showlocalquiz:
-            self.removeables.append('quiz_regional')   
-    
+            self.removeables.append('quiz_regional')
+
     def _setup(self, SPGoodies, dm, bottombar):
         self.SPG = SPGoodies
         self.dm = dm
@@ -234,38 +234,38 @@ class Activity:
         self.orgscreen = pygame.Surface(self.screenclip.size) # we use this to restore the screen
         self.orgscreen.blit(self.screen, (0, 0), self.screenclip)
         self.backgr = self.SPG.get_background()
-        
+
         self.theme_dir = os.path.join(self.SPG.get_libdir_path(), 'SPData', 'themes', self.SPG.get_theme())
         self.theme_rc = self.SPG.get_theme_rc()
-        self.actives = SPInit(self.screen,self.backgr)        
+        self.actives = SPInit(self.screen,self.backgr)
         self.actives.set_onematch(True)
-                
+
         img = utils.load_image(os.path.join(self.theme_dir, bottombar))
         self.bottom_bar = SPSprite(img)
         if self.COPmode:# used for the btp controlpanel
             self.bottom_bar.moveto((0, 900))
         else:
             self.bottom_bar.moveto((0, 534))
-        
+
     def _parse_menu(self, theme_dir, xmlname):
         p = os.path.join(theme_dir, xmlname)
         try:
             Pm = ParseMenu(p)
-        except Exception, info:
+        except Exception as info:
             self.logger.exception("Error while parsing menu xml file: %s" % p)
-            raise utils.MyError, info
+            raise utils.MyError(info)
         self.menu = Pm.get_menu()
         self.menudefault = Pm.get_menudefault()
-    
+
     def _build_menu(self, theme_dir, theme_rc, lang):
         p = os.path.join(theme_dir, 'menuicons')
         try:
             self.Mn = Menu(p, self.menu, self.menu_callback, theme_rc, lang, self.menudefault, \
                            removeables=self.removeables)
-        except Exception, info:
+        except Exception as info:
             self.logger.exception("Error while constructing the menu buttons")
-            raise utils.MyError, info
-        
+            raise utils.MyError(info)
+
     def _remove_buttons(self, buttons):
         #self.logger.debug("_remove_buttons called with:%s" % buttons)
         if not self.actives:
@@ -273,11 +273,11 @@ class Activity:
         for b in buttons:
             b.erase_sprite()
         self.actives.remove(buttons)
-    
+
     def _display_buttons(self, menubuttons):
         if len(menubuttons) == 0:
             self.logger.error("No buttons found to display")
-            raise utils.MyError, "No buttons found to display, check your install"
+            raise utils.MyError("No buttons found to display, check your install")
             return
         if menubuttons == self.displayed_bottom_buttons:
             refresh = False
@@ -288,11 +288,11 @@ class Activity:
                 b.mouse_hover_leave()
             b.display_sprite()
         self.actives.add(menubuttons)
-    
+
     def menu_callback(self, sprite, event, data):
         #self.logger.debug('menu_callback called with sprite %s, event %s and data %s' % (sprite, event, data))
         pygame.time.wait(200)
-        if type(data[0]) not in types.StringTypes:
+        if type(data[0]) not in (str,):
             self.logger.debug("menu cbf data is object list")
             if self.selected_button:
                 self.selected_button.unselect()
@@ -311,7 +311,7 @@ class Activity:
             self.bottom_bar.erase_sprite()
             self.SPG._menu_activity_userchoice(data[0])
             return
-    
+
     def refresh_sprites(self):
         """Mandatory method, called by the core when the screen is used for blitting
         and the possibility exists that your sprites are affected by it."""
@@ -323,11 +323,11 @@ class Activity:
             return "BrainTrainerPlus"
         else:
             return "Childsplay"
-    
+
     def get_name(self):
         """Mandatory method, returnt string must be in lowercase."""
         return "menu"
-    
+
     def get_help(self):
         """Mandatory methods"""
         text = [_("This is the menu used to select an activity."),
@@ -352,14 +352,14 @@ class Activity:
                 "Credits:",
                 "Based on the Open Source Game framework Seniorplay (www.schoolsplay.org)",
                 "The source code for this program is free software; you can redistribute it and/or modify it under the terms of version 3 of the GNU General Public License as published by the Free Software Foundation.",
-                "A copy of this license should be included in the file GPL-3.", 
+                "A copy of this license should be included in the file GPL-3.",
                 " ",
                 "Artwork and game content is property of QiosQ.com and is excluded from the GPL-3 license."
-                "Artwork, Content and Support by QiosQ", 
+                "Artwork, Content and Support by QiosQ",
                 "Version: %s" % Version.version
                     ]
-        return text 
-    
+        return text
+
     def get_helptip(self):
         """Mandatory method, when no tips available returns an empty string"""
         return ""
@@ -370,11 +370,11 @@ class Activity:
         """Mandatory method, must return a string with the number of levels
         in the follwing format:
         _("This level has %s levels" % number-of-levels)"""
-        return ""    
+        return ""
 
     def stop_timer(self):
         pass
-    
+
     def start(self):
         """Mandatory method.
         This will start first level"""
@@ -396,7 +396,7 @@ class Activity:
         self.SPG.tellcore_enable_dice(False)
         self.SPG.tellcore_hide_level_indicator()
         self.scoredisplay.clear_score()
-        
+
         if self.displayed_buttons:
             # we are not in the start menu so we keep the stuff we had
             self._display_buttons(self.displayed_buttons)
@@ -411,13 +411,13 @@ class Activity:
             self._display_buttons(menubuttons)
             but.select()
             self.selected_button = but
-        # we always return true as we don't have real levels        
+        # we always return true as we don't have real levels
         return True
-        
+
     def loop(self, events):
         """Mandatory method"""
         for event in events:
             self.actives.update(event)
-        return 
-    
-    
+        return
+
+

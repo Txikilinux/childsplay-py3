@@ -53,15 +53,15 @@ def make_button_bg_dynamic(width, sizename, colorname, colorname_ro='black', THE
         hleft = utils.load_image(os.path.join(THEME['themepath'], "%s_%s_%s.png" % (sizename, 'left', colorname_ro)))
         hright = utils.load_image(os.path.join(THEME['themepath'], "%s_%s_%s.png" % (sizename, 'right', colorname_ro)))
         hcenter = utils.load_image(os.path.join(THEME['themepath'], "%s_%s_%s.png" % (sizename, 'center', colorname_ro)))
-    except IOError, info:
-        raise Exception, info
-    partwidth = left.get_rect().w 
+    except IOError as info:
+        raise Exception(info)
+    partwidth = left.get_rect().w
     hight = left.get_rect().h
     x = width - partwidth*2
     if x < 1:
         x = 1
         width = partwidth *2 +1
-    
+
     but = pygame.Surface((4+width, 4+hight), SRCALPHA)
     buthov = pygame.Surface((4+width, 4+hight), SRCALPHA)
     newcenter = pygame.transform.scale(center, (x, center.get_rect().h))
@@ -69,7 +69,7 @@ def make_button_bg_dynamic(width, sizename, colorname, colorname_ro='black', THE
     but.blit(newcenter, (partwidth, 2))
     buthov.blit(hnewcenter, (partwidth, 2))
     partwidth += newcenter.get_rect().w
-    
+
     but.blit(left, (2, 2))
     buthov.blit(hleft, (2, 2))
 
@@ -89,10 +89,10 @@ def make_dialog_bg_dynamic(width, height, THEME):
         rightcenter = utils.load_image(os.path.join(THEME['themepath'], "dialog_center_right.png" ))
         leftcenter = utils.load_image(os.path.join(THEME['themepath'], "dialog_center_left.png" ))
         centcenter = utils.load_image(os.path.join(THEME['themepath'], "dialog_center_center.png" ))
-    except IOError, info:
-        raise Exception, info
+    except IOError as info:
+        raise Exception(info)
     dlg = pygame.Surface((4+width, 4+height), SRCALPHA)
-    partwidth = topleft.get_rect().w 
+    partwidth = topleft.get_rect().w
     partheight = topleft.get_rect().h
     y = 0
     centerwidth = width - partwidth * 2
@@ -102,13 +102,13 @@ def make_dialog_bg_dynamic(width, height, THEME):
     dlg.blit(topright,(partwidth + centerwidth, y))
     y += partheight
     sizes['title_area'] = pygame.Rect(0,0,centerwidth + partwidth * 2,y)
-    temp_y = y       
+    temp_y = y
     dlg.blit(pygame.transform.scale(leftcenter,(partwidth,centerheight)), (0,y))
     dlg.blit(pygame.transform.scale(centcenter,(centerwidth,centerheight)), (partwidth,y))
     dlg.blit(pygame.transform.scale(rightcenter,(partwidth,centerheight)), (partwidth + centerwidth,y))
     y += centerheight
     sizes['action_area'] = pygame.Rect(0,temp_y,centerwidth + partwidth * 2,y)
-    
+
     partheight = botleft.get_rect().h
     dlg.blit(botleft,(0,y))
     dlg.blit(pygame.transform.scale(botcenter,(centerwidth,partheight)), (partwidth,y))
@@ -142,7 +142,7 @@ def get_boxes(color, hover_color, rect, selected_color=None, invert=False):
         hcolor.append(c)
     h_color = tuple(hcolor)
     pygame.draw.rect(s, h_color, rect, 2)
-    
+
     s_hover.fill(hover_color)
     hcolor = []
     for c in color:
@@ -227,7 +227,7 @@ def render_textrect(string, fsize, family, rect, text_color, background_color,\
             accumulated_line = ""
             for word in words:
                 test_line = accumulated_line + word + " "
-                # Build the line while the words fit.    
+                # Build the line while the words fit.
                 if font.size(test_line)[0] < rect.width-padding*2:
                     accumulated_line = test_line
                 else:
@@ -269,31 +269,31 @@ def render_textrect(string, fsize, family, rect, text_color, background_color,\
     return surface
 
 if __name__ == '__main__':
-    
+
     import SPLogging
     SPLogging.set_level('debug')
     SPLogging.start()
-    
+
     from base import Init
-        
+
     import pygame
     from pygame.constants import *
     pygame.init()
-    
+
     from SPSpriteUtils import SPInit
-    
+
     scr = pygame.display.set_mode((800, 600))
     scr.fill((240,240,250))
     pygame.display.flip()
     back = scr.convert()
     actives = SPInit(scr, back)
-    
+
     THEME = Init('braintrainer')
     dlg = make_dialog_bg_dynamic(300,500,THEME)
-    
+
     scr.blit(dlg,(100,100))
     pygame.display.update()
-    runloop = 1 
+    runloop = 1
     while runloop:
         pygame.time.wait(100)
         pygame.event.pump()
@@ -302,7 +302,7 @@ if __name__ == '__main__':
             if event.type is KEYDOWN:
                 if event.key == K_ESCAPE:
                     runloop = 0
-    
-    
-    
-    
+
+
+
+

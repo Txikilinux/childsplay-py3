@@ -24,26 +24,26 @@ import glob
 from SPVersion import version
 import os,sys
 
-ans = raw_input("Are the mo files up to date? [y/n]")
+ans = input("Are the mo files up to date? [y/n]")
 if ans != 'y':
     sys.exit(0)
 
 distdir = 'childsplay-%s' % version
-print "looking for old packages"
+print("looking for old packages")
 if os.path.exists(distdir):
-    print "Removing %s" % distdir
+    print("Removing %s" % distdir)
     os.system('rm -rf %s' % distdir)
 if os.path.exists('%s.tgz' % distdir):
-    print "Removing %s.tgz" % distdir
+    print("Removing %s.tgz" % distdir)
     os.system('rm %s.tgz' % distdir)
 if os.path.exists('%s.zip' % distdir):
-    print "Removing %s.zip" % distdir
+    print("Removing %s.zip" % distdir)
     os.system('rm %s.zip' % distdir)
 if os.path.exists('%s.tgz.sig' % distdir):
-    print "Removing %s.tgz.sig" % distdir
+    print("Removing %s.tgz.sig" % distdir)
     os.system('rm %s.tgz.sig' % distdir)
 
-print "Looking for pyc files and remove them"
+print("Looking for pyc files and remove them")
 os.system('find ./ -name "*.pyc" -exec rm -v {} \;')
 
 
@@ -58,15 +58,15 @@ os.system('mkdir %s' % distdir)
 
 for file in myFiles:
     file = file[:-1]
-    if not file or file in myExclude: 
-        print 'not copying {0}'.format(file)
+    if not file or file in myExclude:
+        print('not copying {0}'.format(file))
         continue
     os.system('cp %s %s' % (file, distdir))
 
 for folder in myFolders:
     folder = folder[:-1]
-    if not folder or folder in myExclude: 
-        print 'not copying {0}'.format(folder)
+    if not folder or folder in myExclude:
+        print('not copying {0}'.format(folder))
         continue
     os.system('mkdir -vp %s/%s' % (distdir, folder))
     os.system('cp -r %s %s' % (folder, distdir))
@@ -74,35 +74,35 @@ for folder in myFolders:
 # add alphabet sounds
 os.system('mkdir -vp %s/%s' % (distdir, 'alphabet-sounds'))
 for folder in glob.glob('alphabet-sounds/*-*_*'):
-    print "copying", folder
+    print("copying", folder)
     lang = folder.split('_', 1)[1]
     os.system('cp -r %s %s' % (os.path.join(folder, 'AlphabetSounds', lang),
                                os.path.join(distdir, 'alphabet-sounds', lang)))
 
 # remove the files mentioned in the exclude list
 for item in myExclude:
-    print item
+    print(item)
     try:
         item = os.path.join(distdir,item)
-        print "Exclude -> ",item,
+        print("Exclude -> ",item, end=' ')
         v = os.system('rm -r %s' % item)
         if not v:
-            print "Removed file/dir ->",item
-    except OSError,info:
-        print "####### ERROR ######\n",info
+            print("Removed file/dir ->",item)
+    except OSError as info:
+        print("####### ERROR ######\n",info)
         sys.exit(1)
 # Now the dir tree is clean and ready to be packaged.
-# remember we do everything in a copy, 'distdir'        
-        
-print "\nCreate a GNU/Linux tarball..."
+# remember we do everything in a copy, 'distdir'
+
+print("\nCreate a GNU/Linux tarball...")
 try:
     execString = 'tar -czf %s.tgz %s/' % (distdir, distdir)
-    print execString
+    print(execString)
     os.system(execString)
-except Exception,info:
-    print info,"\nYou must have the tar package installed"
+except Exception as info:
+    print(info,"\nYou must have the tar package installed")
 else:
-    print "Done.\n"
+    print("Done.\n")
 
 os.system("gpg -b --use-agent %s.tgz" % distdir)
 

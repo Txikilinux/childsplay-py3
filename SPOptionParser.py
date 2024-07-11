@@ -24,7 +24,7 @@ import sys, os
 from SPConstants import SUPPORTEDTHEMES, ACTIVITYDATADIR
 from SPVersion import optversion
 from optparse import OptionParser
-import ConfigParser
+import configparser
 import logging
 
 class OParser(OptionParser):
@@ -105,10 +105,10 @@ class OParser(OptionParser):
             dest="user")
         self.add_option("--no-level-pause", action="store_true",
             help="Don't show graphics and don't play a sound between levels.",
-            dest="no_level_pause") 
+            dest="no_level_pause")
         self.add_option("--checklog", action="store_true",
             help="Check the SP log for anomalies in the logs.",
-            dest="checklog") 
+            dest="checklog")
         self.add_option("--crapware", action="store_true",
             help="When running on wellknown crapware like the white MSI 1900 set this option and we try to work around the various OS/hardware bugs.",
             dest="crapware")
@@ -117,29 +117,29 @@ class OParser(OptionParser):
             dest="plainversion")
         self.add_option("--kill-btp",
             help="If we should kill any running btp, a pid must be given. BTP is started again when childsplay quits. (ONLY available on BTP machines)",
-            dest="kill_btp") 
+            dest="kill_btp")
         self.add_option("--restart-btp",
             help="If we killed any running btp, we use this to start BTP again when childsplay quits. (ONLY available on BTP machines)",
-            dest="restart_btp")          
+            dest="restart_btp")
         (self.options, self.args) = self.parse_args()
-        
+
         # in case the user starts us with a unknown theme
         if self.options.theme not in SUPPORTEDTHEMES:
-            print("WARNING: theme %s unknown, using default theme 'childsplay'" % self.options.theme)
+            print(("WARNING: theme %s unknown, using default theme 'childsplay'" % self.options.theme))
             self.options.theme = 'childsplay'
         try:
             self.parse_themerc()
-        except ConfigParser.NoSectionError, info:
-            print("ERROR: Error in rc file %s" % info)
+        except configparser.NoSectionError as info:
+            print(("ERROR: Error in rc file %s" % info))
             sys.exit(1)
-    
+
     def exit(self,  * args):
         """This overrides the OptionParser exit method"""
         if args:
-            print args[1]
+            print(args[1])
             self.print_help()
         sys.exit(0)
-        
+
     def get_options(self):
         return self.options
 
@@ -147,11 +147,11 @@ class OParser(OptionParser):
         return self.args
 
     def parse_themerc(self):
-        config = ConfigParser.ConfigParser()
-        print config
+        config = configparser.ConfigParser()
+        print(config)
         rc = os.path.join(ACTIVITYDATADIR, 'SPData', 'themes', self.options.theme, 'theme.rc')
-        print os.path.exists(rc)
-        print("DEBUG: parsing rc file %s" % rc)
+        print(os.path.exists(rc))
+        print(("DEBUG: parsing rc file %s" % rc))
         config.read(rc)
         #print config.items('menubar')
         d = {}
@@ -164,17 +164,17 @@ class OParser(OptionParser):
         d['menubartop'] = config.get('menubar', 'menubartop')
         d['menubarbottom'] = config.get('menubar', 'menubarbottom')
         d['background'] = config.get('main', 'background')
-        
+
         d['theme'] = self.options.theme
         self.options.theme_rc = d
-        
-        
-            
+
+
+
 
 if __name__ == '__main__':
     op = OParser()
-    print op.get_options()
-    
-    
-    
-    
+    print(op.get_options())
+
+
+
+

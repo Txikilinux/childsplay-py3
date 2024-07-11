@@ -35,12 +35,12 @@ module_logger = logging.getLogger("schoolsplay.SPGuiDBModel")
 from SPOptionParser import OParser
 
 op = OParser()
-# this will return a class object with the options as attributes  
+# this will return a class object with the options as attributes
 CMD_Options = op.get_options()
 
 class SPGoodiesWrapper:
     """Wrapper class, needed to run the datamanager"""
-    _cmd_options = CMD_Options  
+    _cmd_options = CMD_Options
 
 try:
     import sqlalchemy as sqla
@@ -86,20 +86,20 @@ class DataManagerWrapper(SPDataManager.DataManager):
         self.spg = spgoodies
         self.cmd_options = self.spg._cmd_options
         atexit.register(self._cleanup)
-        
+
         try:
-            dbm = DbaseMaker(self.cmd_options.theme, debug_sql=DEBUG)            
-        except (AttributeError, sqlae.SQLAlchemyError, utils.MyError), info:
+            dbm = DbaseMaker(self.cmd_options.theme, debug_sql=DEBUG)
+        except (AttributeError, sqlae.SQLAlchemyError, utils.MyError) as info:
             self.logger.exception("Failed to start the DBase, %s" % info)
-            raise MyError, info
+            raise MyError(info)
         self.content_engine, self.user_engine = dbm.get_engines()
         self.metadata_contentdb, self.metadata_usersdb = dbm.get_metadatas()
         self.all_orms = dbm.get_all_orms()
         self.orms_content_db, self.orms_userdb = dbm.get_orms()
         self.UserSession = sqlorm.sessionmaker(bind=self.user_engine)
         self.ContentSession = sqlorm.sessionmaker(bind=self.content_engine)
-        
-               
+
+
     def get_mapper(self,activity):
         """Overrides the get_mapper from SPDataManager.
         We don't have or use user id's"""
@@ -110,8 +110,8 @@ class DataManagerWrapper(SPDataManager.DataManager):
             raise utils.NoSuchTable("Failed to get mapper: %s" % activity)
         else:
             return mclass
-            
-        
-        
-        
-        
+
+
+
+
+

@@ -21,7 +21,7 @@ import pygame
 from pygame.constants import *
 import utils
 from SPConstants import *
-import logging 
+import logging
 import SPWidgets
 import Mail
 import os
@@ -38,7 +38,7 @@ class Debugscreen:
         self.currentmilestone = milestone
         self.screen = screen
         self.screenshotpath = self._make_screenshot()
-        
+
         id_pos = (60, 0)
         txt_0_pos = (60, 450)
         short_descr_pos = (60, 80)
@@ -52,11 +52,11 @@ class Debugscreen:
         but_pos = (40, 500)
         fsize12 = 11
         fsize14 = 14
-        
+
         self.labels = []
         self.buttons = []
         self.entries = []
-        
+
         self.buthash = utils.OrderedDict()
         self.buthash = {"Cancel":self.on_quit_clicked, \
                         "Mail log":self.on_mail_logfile_clicked,\
@@ -111,12 +111,12 @@ class Debugscreen:
                                     length=150, fsize=fsize12, border=1)
         self.entries.append(self.name_te)
         # buttons
-        for label, func in self.buthash.items():
+        for label, func in list(self.buthash.items()):
             b = SPWidgets.Button(label, but_pos, fsize=16, padding=8, name=label)
             b.connect_callback(func, MOUSEBUTTONDOWN, label)
             self.buttons.append(b)
             but_pos = (but_pos[0] + b.get_sprite_width()+12, but_pos[1])
-        
+
         self._build_screen()
 
     def _build_screen(self):
@@ -124,17 +124,17 @@ class Debugscreen:
         self.screen.set_clip((0, 0, 800, 600))
         self.dim = utils.Dimmer()
         self.dim.dim(darken_factor=160, color_filter=CORNFLOWERBLUE)
-    
+
         self.surf = pygame.Surface((750, 550))
         self.surf.fill(GREY92)
         self.screen.blit(self.surf, (25, 25))
         pygame.display.update()
         for s in self.labels + self.buttons + self.entries:
             s.display_sprite()
-            
+
     def get_actives(self):
         return self.buttons + self.entries
-    
+
     def on_quit_clicked(self, *args):
         self.logger.debug("quit called")
         for s in self.labels + self.buttons + self.entries:
@@ -144,21 +144,21 @@ class Debugscreen:
         self.screen.set_clip(self.scrclip)
         pygame.display.update()
         return -2
-        
+
     def on_mail_logfile_clicked(self, *args):
         self.logger.debug("mail_logfile called")
         return self._mail_logfile(logpath=os.path.expanduser(os.path.join('~', '.schoolsplay.rc', 'schoolsplay.log')))
 
     def on_mail_scrshot_clicked(self, *args):
         self.logger.debug("mail_scrshot called")
-        
+
         return self._mail_logfile(imgpath=self.screenshotpath)
-        
+
     def on_mail_all_clicked(self, *args):
         self.logger.debug("mail_all")
         return self._mail_logfile(logpath=os.path.expanduser(os.path.join('~', '.schoolsplay.rc', 'schoolsplay.log')), \
                             imgpath=self.screenshotpath)
-        
+
     def on_git_pull_clicked(self, *args):
         self.logger.debug("git_pull called")
         self.screen.blit(self.surf, (25, 25))
@@ -198,13 +198,13 @@ class Debugscreen:
         else:
             kind = 'develop'
         rc_hash['kind'] = kind
-        
+
         cmd_list = []
-        print rc_hash
-        for k in rc_hash.keys():
-            for c, v in rc_hash[k].items():
+        print(rc_hash)
+        for k in list(rc_hash.keys()):
+            for c, v in list(rc_hash[k].items()):
                 cmd_list.append('--%s=%s' % (c,v))
-        
+
         ppp = os.path.expanduser(os.path.join('~', '.schoolsplay.rc', 'post_pull'))
         if os.path.exists(ppp):
             f = open(ppp, 'r')
@@ -224,7 +224,7 @@ class Debugscreen:
         for s in scripts_todo:
             self.logger.debug("Running post_pull script %s" % s)
             cmd = ' '.join(['sh %s' %s] + cmd_list)
-            self.logger.debug("using cmdline options %s" % cmd)          
+            self.logger.debug("using cmdline options %s" % cmd)
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             txt = []
             for l in process.communicate():
@@ -243,12 +243,12 @@ class Debugscreen:
             path = os.path.join(HOMEDIR, self.act_name + '.jpeg')
             pygame.image.save(scr, path)
             self.logger.info("Screenshot %s taken" % path)
-        except Exception, info:
+        except Exception as info:
             self.logger.error("Failed to make screenshot %s" % info)
             text = _("Failed to make screenshot %s") % info
             dlg = SPWidgets.Dialog(text, title="ERROR !")
             dlg.run()
-            raise utils.MyError, "failed to make a screenshot"
+            raise utils.MyError("failed to make a screenshot")
         return path
 
     def _get_entrydata(self):
@@ -261,7 +261,7 @@ class Debugscreen:
         data['assigned'] = self.assigned_te.get_text()
         data['name'] = self.name_te.get_text()
         return data
-            
+
 
     def _validate_data(self, data):
         entries = []
@@ -282,55 +282,55 @@ class Debugscreen:
                     buttons=["OK"], title='Error !')
             dlg.run()
             return
-        
+
         self.screen.blit(self.surf, (25, 25))
         # If we have network troubles, the smtp client timesout in 10 seconds.
         line = _("Your email will be send, please wait.....")
         s = utils.char2surf(line, fsize=24, fcol=DARKGREEN,bold=True)
         self.screen.blit(s, (50, 300))
         pygame.display.update()
-        
+
         try:
             Mail.mail(subject=data['short'], description=data['long'], \
                       component=data['component'], prio=data['prio'], \
                       assigned=data['assigned'], milestone=data['milestone'], \
                       name=data['name'], \
                       logpath=logpath, imgpath=imgpath)
-        except Mail.SendmailError,err:
+        except Mail.SendmailError as err:
             self.activity_info_dialog(_("Failed to send the email. Error: %s") % err)
         return self.on_quit_clicked()
 
 if __name__ == '__main__':
-    
-    import __builtin__
-    __builtin__.__dict__['_'] = lambda x:x
-    
+
+    import builtins
+    builtins.__dict__['_'] = lambda x:x
+
     import SPLogging
     SPLogging.set_level('debug')
     SPLogging.start()
-        
+
     import pygame
     from pygame.constants import *
     pygame.init()
-    
+
     from SPSpriteUtils import SPInit
     from SPWidgets import Init
     def cbf(sprite, event, data):
-        print 'cb called with sprite %s, event %s and data %s' % (sprite, event, data)
-        print 'sprite name: %s' % sprite.get_name()
-        print 'data is %s' % data
-    
+        print('cb called with sprite %s, event %s and data %s' % (sprite, event, data))
+        print('sprite name: %s' % sprite.get_name())
+        print('data is %s' % data)
+
     scr = pygame.display.set_mode((800, 600))
     scr.fill(LIGHTSKYBLUE1)
     pygame.display.flip()
     back = scr.convert()
     actives = SPInit(scr, back)
-    
+
     Init('braintrainer')
 
     db = Debugscreen('none_act', 'BT2.1', scr)
     actives.add(db.get_actives())
-    runloop = 1 
+    runloop = 1
     while runloop:
         pygame.time.wait(100)
         pygame.event.pump()
@@ -340,11 +340,11 @@ if __name__ == '__main__':
                 if event.key == K_ESCAPE:
                     runloop = 0
                 elif event.key == K_F1:
-                    print "F1"
-                
+                    print("F1")
+
             result = actives.update(event)
             if result and result[0][1] == -2:
                 runloop = False
-                    
-                    
-                    
+
+
+

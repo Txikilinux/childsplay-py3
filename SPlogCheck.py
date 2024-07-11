@@ -39,7 +39,7 @@ if len(oldfiles) > 20:
             SPLCmodule_logger.warning("Can't remove file %s" % f)
         else:
             SPLCmodule_logger.warning("removed %s" % f)
-            
+
 # Which messages to look for
 pattern = re.compile("ERROR|CRITICAL")
 lines = []
@@ -56,7 +56,7 @@ if not lines:
     SPLCmodule_logger.warning("The logfile %s hasn't any content ?" % LOGPATH)
     SPLCmodule_logger.warning("Stopping the log parsing.")
     lines =[]
-    
+
 notifycaller = False
 for line in lines:
     if re.search(pattern, line):
@@ -67,9 +67,9 @@ for line in lines:
         f.close()
         notifycaller = True
         break
-        
-if notifycaller:        
-    raise MyError, _("Found error messages in the log file, please contact the developers.")
+
+if notifycaller:
+    raise MyError(_("Found error messages in the log file, please contact the developers."))
 
 
 

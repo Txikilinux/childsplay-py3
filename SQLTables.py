@@ -26,7 +26,7 @@
 
 # PLEASE DON'T CHANGE ANYTHING IN THIS MODULE WITHOUT DISCUSSING IT ON THE
 # SCHOOLSPLAY MAILINGLIST.
-# THE CreateTemplate SCRIPT and Datamanager DEPENDS ON CERTAIN SYNTAX TO BE 
+# THE CreateTemplate SCRIPT and Datamanager DEPENDS ON CERTAIN SYNTAX TO BE
 # PRESENT IN HERE.
 
 # Make sure to add a ORM class to SPORMs.py if you add new sql tables.
@@ -39,7 +39,7 @@ import SPORMs as ORMS
 
 def create_contentdb_orms(metadata):
     tables = {}
-    for name in [k for k in ORMS.__dict__.keys() if k.startswith('game_')]:
+    for name in [k for k in list(ORMS.__dict__.keys()) if k.startswith('game_')]:
         t = Table(name, metadata, autoload=True)
         orm = getattr(ORMS, name)
         orm._name = name
@@ -101,8 +101,8 @@ class SqlTables:
                            Column('passwrd', Unicode(10)),
                            Column('activities', Unicode(250)),
                            Column('audio', Integer, default=50),
-                           Column('dt_target', Unicode(250), default=u'default'),
-                           Column('levelup_dlg', Unicode(4), default=u'true')
+                           Column('dt_target', Unicode(250), default='default'),
+                           Column('levelup_dlg', Unicode(4), default='true')
                            )
 
         # The graph image needs two values:
@@ -141,7 +141,7 @@ class SqlTables:
                             Column('activity_name', Unicode(50)),
                             Column('key', Unicode(20)),
                             Column('value', Unicode(200)),
-                            Column('theme', Unicode(20), default=u'default'),
+                            Column('theme', Unicode(20), default='default'),
                             Column('comment', Unicode(200)))
 
         self.faces = Table('users_faces', metadata,
@@ -179,7 +179,7 @@ class SqlTables:
         # 'end_time' to hold the time the level is finished (set by core)
         # 'level' to hold the level number (set by core)
         # 'score' to hold the score value.
-        # The mandatory columns are provided by the BaseTable class, 
+        # The mandatory columns are provided by the BaseTable class,
         # the reporter tool expect them to be present so please extend the BaseTable
         # instead of creating your own.
         # The rest of the cols are set/used by the activity.
@@ -320,4 +320,4 @@ if __name__ == '__main__':
     # metadata.engine.echo = True
     sqltb = SqlTables(metadata)
     tables = sqltb._create_tables(metadata)
-    print tables
+    print(tables)
