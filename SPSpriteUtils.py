@@ -635,10 +635,9 @@ class SPGroup(pygame.sprite.RenderUpdates):
         l_append = l.append
         if args:
             for s in list(self.spritedict.keys()):
-                v = functools.partial(s.update, args)
-                #v = a(s.update, args)
+                v = s.update(*args)
                 if v:
-                    #self._logger.debug("returnt from SPSprite update %s" % v)
+                    self._logger.debug("returnt from SPSprite update %s" % v)
                     l_append((s, v))
                     if v == -1:
                         pygame.event.clear()
@@ -825,10 +824,9 @@ class CPStackGroup:
            calls the update method for all sprites in the group.
            passes all arguments are to the Sprite update function."""
         if args:
-            a = apply
             stack = self.stack
             for i, s in stack:
-                a(s.update, args)
+                s.update(*args)
         else:
             for i, s in stack:
                 s.update()

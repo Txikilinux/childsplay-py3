@@ -20,10 +20,10 @@
 
 #create logger, logger was setup in SPLogging
 import logging
-# In your Activity class -> 
+# In your Activity class ->
 # self.logger =  logging.getLogger("childsplay.packid.Activity")
 # self.logger.error("I don't understand logger")
-# See SP manual for more info 
+# See SP manual for more info
 
 module_logger = logging.getLogger("childsplay.packid")
 
@@ -56,23 +56,23 @@ class PacKid:
         self.pac_d_c = Img.pac_d_c
         self.pac_smile = Img.pac_smile
         self.img = self.pac_smile
-        
+
         self.rect = self.img.get_rect()
         self.rect.move_ip(startx,starty)
-        
+
         self.startrect = self.img.get_rect()
         self.startrect.move_ip(startx,starty)
         self.matrix = matrix
         self.row = 1
         self.col = 1
         self.dir_dic = {'UP':self._up,'DOWN':self._down,'LEFT':self._left,'RIGHT':self._right}
-                
+
     def update(self,direc):
         Snd.waka.play()
-        apply(self.dir_dic[direc])
+        self.dir_dic[direc]()
         return (self.row,self.col)
         #print self.row,self.col,self.rect
-       
+
     def _up(self):
         if self.img == self.pac_u_c:
             self.img = self.pac_u
@@ -81,7 +81,7 @@ class PacKid:
         if self.matrix[self.row-1][self.col]: # can we go here?
             self.row -= 1
             self.rect.move_ip(0,-self.speed)
-        
+
     def _down(self):
         if self.img == self.pac_d_c:
             self.img = self.pac_d
@@ -90,7 +90,7 @@ class PacKid:
         if self.matrix[self.row+1][self.col]: # can we go here?
             self.row += 1
             self.rect.move_ip(0,self.speed)
-        
+
     def _left(self):
         if self.img == self.pac_l_c:
             self.img = self.pac_l
@@ -99,7 +99,7 @@ class PacKid:
         if self.matrix[self.row][self.col-1]: # can we go here?
             self.col -= 1
             self.rect.move_ip(-self.speed,0)
-    
+
     def _right(self):
         if self.img == self.pac_r_c:
             self.img = self.pac_r
@@ -108,12 +108,12 @@ class PacKid:
         if self.matrix[self.row][self.col+1]: # can we go here?
             self.col += 1
             self.rect.move_ip(self.speed,0)
-    
+
 class Memory:
     def __init__(self,points=('1','2','3','4','5')):
         self.memory = {}
         self.stack = [None]* len(points)
-        
+
     def remember(self, xxx_todo_changeme):
         #print key,item
         (key,item) = xxx_todo_changeme
@@ -123,10 +123,10 @@ class Memory:
             del self.memory[self.stack.pop()]
         except KeyError:
             pass
-            
+
     def recall(self,key):
         if key in self.memory:
-            return self.memory[key] 
+            return self.memory[key]
 
 class Letters(Memory):
     instance = 0
@@ -144,7 +144,7 @@ class Letters(Memory):
         self.col = 12
         self.rect.move_ip(self.col*24+150,self.row*24+60+y)
         self.dest = dest
-        
+
         self.old_move = None
         #self.org = (self.row,self.col)
         #self.vector = self.dest[0]-self.org[0],self.dest[1]-self.org[1]
@@ -162,7 +162,7 @@ class Letters(Memory):
         self.org = (self.row,self.col)
         stop = self._iq((self.dest[0]-self.org[0],self.dest[1]-self.org[1]))
         return stop
-            
+
     def _iq(self,vector):
         direcs = self._where_to_go()
         if (self.row,self.col) == (8,12):# still in the box
@@ -190,14 +190,14 @@ class Letters(Memory):
                 else:
                     prior[0] = 'd'
                     prior[3] = 'u'
-                
+
                 if vector[1] < 0:
                     prior[1] = 'l'
                     prior[2] = 'r'
                 else:
                     prior[1] = 'r'
                     prior[2] = 'l'
-                
+
             else:
                 if vector[1] < 0:
                     prior[0] = 'l'
@@ -211,7 +211,7 @@ class Letters(Memory):
                 else:
                     prior[1] = 'd'
                     prior[2] = 'u'
-        
+
         #print 'direcs',direcs,'prior',prior,'row/col',self.row,self.col
         for d in prior:
             if d in direcs:
@@ -228,7 +228,7 @@ class Letters(Memory):
         stop = self.dest == (self.row,self.col)
         #print 'stop-iq',stop
         return stop
-        
+
     def _where_to_go(self):
         direcs = []
         if self.matrix[self.row-1][self.col]: # up
@@ -240,9 +240,9 @@ class Letters(Memory):
         if self.matrix[self.row][self.col+1]: # right
             direcs.append(('r'))
         return direcs
-        
+
     def _move(self,choice):
-        
+
         if choice == 'u':
             self.row -= 1
             self.rect.move_ip(0,-self.speed)
@@ -259,7 +259,7 @@ class Letters(Memory):
             self.col += 1
             self.rect.move_ip(self.speed,0)
             self.old_move = 'l'
-        return        
+        return
 
 class Word:
     """  Highlight the letter in the word"""
@@ -334,11 +334,11 @@ class SidePanel:
         self.when = 9# number of gooditems to play last level
         self.level_pos_list = [(10,10),(10,110),(10,210),(10,310)]
         self.inlevel_word_pos_list = [(26,10),(26,110),(26,210),(26,310)]
-        
+
         self.x = 30
         self.y = 6
         self.fsize = 12
-        
+
         self.fcol = (255,255,51)
         i = 1
         for l in levels[:-1]: # The last level is different
@@ -351,29 +351,29 @@ class SidePanel:
         #set x and y to the first position
         self.y = self.level_pos_list[0][1]
         self.x = self.level_pos_list[0][0]+16
-        
+
         self.goodimg = pygame.transform.scale(Img.pac_smile,(12,12))
         self.wrongimg = pygame.transform.scale(Img.pac_sad,(12,12))
         self.gooditems = 0
         self.count,self.level = 0,0
 
         self.switch_task()
-               
+
     def _set_last_level(self,pos):
         self._set_level("Level "+str(4)+":", 4)
-    
+
     def _set_level(self,levelstr,level):
         pos = self.level_pos_list[level-1]
         levelimg = utils.char2surf(levelstr,self.fsize+2,self.fcol,self.ttf, \
                              antialias=True, bold=True)
         self.surf.blit(levelimg,pos)
-                             
+
     def set_word(self,word):
         wordimg, size = utils.text2surf(word,self.fsize-2,self.fcol,self.ttf,sizel=True,\
                                    antialias=True, bold=True)
         self.y += size[1]
         self.surf.blit(wordimg,(self.x,self.y))
-            
+
     def switch_task(self):
         SwitchLevel = False
         if self.count == 3:
@@ -383,17 +383,17 @@ class SidePanel:
             SwitchLevel = True
         self.count += 1
         return SwitchLevel
-    
+
     def set_good_wrong(self,gw):
         if gw > 2:
             self.surf.blit(self.wrongimg,(self.x-16,self.y+4))
         else:
             self.surf.blit(self.goodimg,(self.x-16,self.y+4))
             self.gooditems += 1
-    
+
     def get_surf(self):
         return self.surf.convert()
-        
+
     def get_level_score(self):
         #print 'gooditems',self.gooditems
         if self.gooditems >= self.when:
@@ -412,7 +412,7 @@ class LastLevelImg:
         # calculate the pix pos row*24+60, col*24+150
         self.row,self.col = pos
         self.rect.move_ip(self.col*24+150,self.row*24+60)
-        
+
     def eat(self):
         utils.load_music(self.file).play()
         return 25 #score
@@ -423,9 +423,9 @@ class Activity:
     The activity is started by instancing this class by the core.
     This class must at least provide the following methods.
     start (self) called by the core before calling 'next_level'.
-    post_next_level (self) called once by the core after 'next_level' *and* after the 321 count. 
+    post_next_level (self) called once by the core after 'next_level' *and* after the 321 count.
     next_level (self,level) called by the core when the user changes levels.
-    loop (self,events) called 40 times a second by the core and should be your 
+    loop (self,events) called 40 times a second by the core and should be your
                       main eventloop.
     get_helptitle (self) must return the title of the game can be localized.
     get_help (self) must return a list of strings describing the activty.
@@ -461,7 +461,7 @@ class Activity:
         # You MUST call SPInit BEFORE using any of the SpriteUtils stuff
         # it returns a reference to the special CPGroup
         self.actives = SPSpriteUtils.SPInit(self.screen,self.backgr)
-        
+
         self.language = self.SPG.get_localesetting()[0]
         self.ttf = None
         self.stopflag = None# used to stop the loop when not level 4
@@ -469,14 +469,14 @@ class Activity:
         self.letters_spots = []
         self.gamelevels = list(range(4))
         self.oldvolume = 0
-    
+
     def __del__(self):
         #print 'Reached del'
         try:
             Snd.walk.stop()
         except:
-            pass  
-    
+            pass
+
     def clear_screen(self):
         self.screen.blit(self.orgscreen,self.blit_pos)
         self.backgr.blit(self.orgscreen,self.blit_pos)
@@ -490,11 +490,11 @@ class Activity:
     def get_helptitle(self):
         """Mandatory method"""
         return _("Packid")
-    
+
     def get_name(self):
         """Mandatory method, returnt string must be in lowercase."""
         return "packid"
-    
+
     def get_help(self):
         """Mandatory methods"""
         text=[_("The aim of the game:"),
@@ -504,31 +504,31 @@ class Activity:
         _("(max two per word), you can play the last level which is a maze."),
         _("Try to find the way out while eating the fruits for extra points and"),
         _("funny sounds :-)")]
-        return text 
-    
+        return text
+
     def get_helptip(self):
         """Mandatory method, when no tips available returns an empty list"""
         return []
-        
+
     def get_helptype(self):
         """Mandatory method, you must set an type"""
         # Possible types are: Memory, Math, Puzzle, Keyboardtraining, Mousetraining
         #                     Language, Alphabet, Fun, Miscellaneous
         return _("Fun/Alphabet")
-        
-    
+
+
     def get_helplevels(self):
         """Mandatory method, must return a string with the number of levels
         in the follwing format:
         _("This level has %s levels") % number-of-levels"""
         return _("This activity has %s levels") % 4
-    
+
     def pre_level(self,level):
         """Mandatory method.
         Return True to call the eventloop after this method is called."""
         self.logger.debug("pre_level called with: %s" % level)
         pass
-        
+
     def next_level(self,level,dbmapper):
         """Mandatory method.
         Return True if there levels left.
@@ -538,15 +538,15 @@ class Activity:
             return False
         self.level = level
         self.dbmapper = dbmapper
-        # Your top blit position, this depends on the menubar position 
+        # Your top blit position, this depends on the menubar position
         if self.blit_pos[1] == 0:
             y = 10
-            self.gamearea = pygame.Rect(0, y, 800, 490) 
+            self.gamearea = pygame.Rect(0, y, 800, 490)
         else:
             y = 110
-            self.gamearea = pygame.Rect(0, y, 800, 600) 
+            self.gamearea = pygame.Rect(0, y, 800, 600)
         return True
-    
+
     def start(self):
         """Mandatory method."""
         Snd.waka = utils.load_music(os.path.join(self.my_datadir,'waka.wav'))
@@ -554,7 +554,7 @@ class Activity:
         Snd.finlevel = utils.load_sound(os.path.join(self.my_datadir,'finlevel.wav'))
         Snd.bummer = utils.load_sound(os.path.join(self.CPdatadir,'bummer.wav'))
         Snd.eat = utils.load_sound(os.path.join(self.my_datadir,'eat.wav'))
-        
+
         Img.datadir = self.my_datadir
 
         Img.pac_u = utils.load_image(os.path.join(self.my_datadir,'pac_u.png'),1)
@@ -567,9 +567,9 @@ class Activity:
         Img.pac_r_c = utils.load_image(os.path.join(self.my_datadir,'pac_r_c.png'),1)
         Img.pac_smile = utils.load_image(os.path.join(self.my_datadir,'pac_smile.png'),0)
         Img.pac_sad = utils.load_image(os.path.join(self.my_datadir,'pac_sad.png'),0)
-        
+
         self.sidepan = SidePanel(self.gamelevels,self.ttf,self.blit_pos)
-        
+
         # test if we have a words list for the locale
         try:
             wordsloc = self.SPG.get_localesetting()[0].split('_')[0]
@@ -598,8 +598,8 @@ class Activity:
             # if true the sound dir wasn't found and 'en' is returnt as fallback
             self.alphabetdir = None
         self.SPG.tellcore_set_dice_minimal_level(3)
-        
-        
+
+
     def _setup_last_level(self):
         self.fruits,spots = [],[]
         self.letters_spots = []# use this again for the fruits
@@ -612,14 +612,14 @@ class Activity:
             spots.append((spot))
             self.letters_spots.append((spot))
             self.fruits.append((LastLevelImg(music.pop(),file,spot)))
-        self.letters_spots.append(((15,23)))    
-    
+        self.letters_spots.append(((15,23)))
+
     def post_next_level(self):
         """Mandatory method.
         This is called once by the core after 'next_level' *and* after the 321 count.
         You should place stuff in here that run in a seperate thread like sound play."""
         self.next_exercise()
-        
+
     def get_score(self,timespend):
         """Mandatory method.
         @timespend is the time spend inside the level as it's calculated
@@ -630,18 +630,18 @@ class Activity:
         # dbase stuff.
         m,s = timespend.split(':')
         seconds = int(m)*60 + int(s)
-        
+
         self.dbmapper.insert('word',self.word)
         self.dbmapper.insert('wrong',self.gw)
-        
+
         score = max(1,(10-self.gw) - (seconds/150.0))
         self.logger.debug("score is: %s" % score)
         return score
-    
+
     def stop_timer(self):
         """You *must* provide a method to stop timers if you use them.
-        The SPC will call this just in case and catch the exception in case 
-        there's no 'stop_timer' method""" 
+        The SPC will call this just in case and catch the exception in case
+        there's no 'stop_timer' method"""
         try:
             self.timer.stop()
         except:
@@ -665,7 +665,7 @@ class Activity:
                     pygame.display.update((r,rr))
         if self.objs_to_move: # Are there letters to move?
             self._move_objs()
-        
+
         elif self.pack_pos in self.letters_spots: # Have we hit a letter?
             if self.level == 4 and self.pack_pos == (15,23):# pac hit exit in last level
                 self.SPG.tellcore_game_end(True)
@@ -681,8 +681,8 @@ class Activity:
                         else:
                             self._check_letter(item)
                         break
-        return 
-    def next_exercise(self): 
+        return
+    def next_exercise(self):
         pygame.display.update(self.screen.fill((0,0,0), self.gamearea))
         self.letters_spots = []
         if self.level == 1:
@@ -700,11 +700,11 @@ class Activity:
         elif self.level == 4:
             if self.sidepan.get_level_score():
                 load_music(os.path.join(self.my_datadir,'feelgood.ogg')).play()
-                
+
                 self.brick = utils.load_image(os.path.join(self.my_datadir,'camo.png'),0)
                 m = MazeGen(17,25)
                 matrix = m.get_maze()
-                
+
                 #matrix = self._read_grid('grid3.txt')
                 self._build_field(matrix)
                 self._setup_last_level()
@@ -716,10 +716,10 @@ class Activity:
         else:
             self.stopflag = 1
             return
-                       
+
         Img.backgr = self.screen.convert()
         Img.backgr_start = self.screen.convert()# keep a begin situation surface
-        
+
         line1 = _("Find all the letters in the right order.")
         line2 = _("The word to find is: ")
         ### TODO fix RTL issues here
@@ -736,7 +736,7 @@ class Activity:
                 surf,self.surfword_offset = utils.text2surf(line2,12,(183,255,50),self.ttf,1, bold=True)
                 pygame.display.update(self.screen.blit(surf,(8,30+self.gamearea.top)))
                 word = random.choice(self.words)
-        
+
         # start the show and set some initial values
         self.gw = 0 #good/wrong counter
         if self.level == 4:
@@ -757,7 +757,7 @@ class Activity:
         x = 174
         y = 84 + self.gamearea.top
         self.packid = PacKid(matrix,x,y,24)
-        
+
         self.pack_pos = (self.packid.row,self.packid.col)# start postion
         if self.level < 4:
             self.oldvolume = Snd.walk.get_volume()
@@ -765,7 +765,7 @@ class Activity:
             Snd.walk.set_volume(0.4)
             Snd.walk.play(-1)# stop when the letters are stopped (in def _move_objs)
         return True
-    
+
     def _update_surfword(self):
         surf, letter_to_speak = self.surfword.update()
 #        if self.SPG.get_localesetting()[1]:
@@ -778,15 +778,15 @@ class Activity:
         pygame.display.update(self.screen.blit(surf,\
                         (8+self.surfword_offset[0],30+self.gamearea.top)))
         pygame.time.wait(1000)
-    
+
     def _speak_letter(self,letter):
         """Plays the alphabet soundfile for @letter
         Return True on succes and False on failure"""
         return utils.speak_letter(letter.lower(), self.language)
-           
+
     def _update_sidepanel(self):
         pygame.display.update(self.screen.blit(self.sidepan.get_surf(),(0,60 + self.gamearea.top)))
-    
+
     def _read_grid(self,name):
         grid = []
         filename = os.path.join(self.my_datadir,name)
@@ -795,7 +795,7 @@ class Activity:
             grid.append((tuple(map(int,line[:-1]))))
         f.close()
         return tuple(grid)
-    
+
     def _build_field(self,matrix, ran=0):
         Img.matrix = matrix #stash ref
         surf = pygame.Surface((620,428))
@@ -820,7 +820,7 @@ class Activity:
                 x +=24
             y += 24
         pygame.display.update(self.screen.blit(surf,(140,50 + self.gamearea.top)))
-        
+
     def _start_letters(self,word):
         self.word,spots = word,[]
         self.letter_to_find = 0
@@ -832,7 +832,7 @@ class Activity:
                 spot = self._rand_spot()
             spots.append((spot))
             self.objs_to_move.append((Letters(item,(255,255,255),spot,self.ttf, self.gamearea.top)))
-            
+
             #print item,spot,Img.matrix[spot[0]][spot[1]]
 
     def _rand_spot(self):
@@ -842,7 +842,7 @@ class Activity:
             if Img.matrix[spot[0]][spot[1]]:
                 break
         return spot
-        
+
     def _on_keypress(self,key):
         if key == K_UP:
             return 'UP'
@@ -852,7 +852,7 @@ class Activity:
             return 'LEFT'
         elif key == K_RIGHT:
             return 'RIGHT'
-        
+
     def _move_objs(self):
         objs_to_remove,dirty_rects = [],[]
         for obj in self.objs_to_move:
@@ -863,14 +863,14 @@ class Activity:
                 rec.move_ip(4,0)
                 Img.backgr.blit(obj.image,rec)
                 objs_to_remove.append((obj))
-                self.letter_objs.append((obj)) # store letters objs 
+                self.letter_objs.append((obj)) # store letters objs
                 # store the pos of the letter, used to check collide with packid
                 # take these positions because a obj maybe died (look in class)
-                self.letters_spots.append(((obj.row,obj.col))) 
+                self.letters_spots.append(((obj.row,obj.col)))
             dirty_rects.append((self.screen.blit(obj.image,obj.rect)))
         pygame.time.wait(100)
         pygame.display.update(dirty_rects)
-        
+
         if objs_to_remove:
             for item in objs_to_remove:
                 self.objs_to_move.remove(item)
@@ -880,7 +880,7 @@ class Activity:
                     r= self.screen.blit(self.packid.img,self.packid.rect)# blit packid
                     pygame.display.update(r)
                     pygame.time.wait(500)
-    
+
     def _check_letter(self,obj):
         if obj.char == self.word[self.letter_to_find]:
             # Good letter
@@ -895,24 +895,24 @@ class Activity:
             else:
                 Snd.eat.play()
             pygame.time.wait(500)
-            
+
             self.score = 10
             self.letters_spots.remove(self.pack_pos)
             #print self.letters_spots
             if self.letters_spots:
-                self.letter_to_find += 1 
+                self.letter_to_find += 1
                 self._update_surfword()
-            else: # last letter 
+            else: # last letter
                 Snd.finlevel.play()
                 self.score = 100
                 Img.backgr.blit(Img.backgr_start,obj.rect,obj.rect)# erase letter
                 self.sidepan.set_good_wrong(self.gw)
-                self._update_sidepanel()   
+                self._update_sidepanel()
                 pygame.time.wait(2000)
                 if self.sidepan.switch_task():
                     self.SPG.tellcore_level_end(store_db=True)
                 else:
-                    self.next_exercise() 
+                    self.next_exercise()
         else:
             #wrong letter
             if self.packid.img is Img.pac_sad:
@@ -922,4 +922,4 @@ class Activity:
             self.packid.img = Img.pac_sad
             pygame.display.update(self.screen.blit(Img.pac_sad,self.packid.rect))
             pygame.time.wait(500)
-        
+

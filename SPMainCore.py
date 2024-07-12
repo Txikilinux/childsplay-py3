@@ -508,7 +508,7 @@ class MainCoreGui:
     def call_foreign_observers(self):
         self.logger.warning("Calling foreign_observers to cleanup their own mess")
         for obs in self.foreign_observers:
-            apply(obs)
+            obs()
 
     def start(self):
         # start menu
@@ -1492,6 +1492,7 @@ class MainCoreGui:
             self.clock.tick(self.framerate)
             pygame.event.pump()
             events = pygame.event.get()
+            #print(f"events: {events}")
             for event in events:
                 if event.type is QUIT:
                     self.run_event_loop = False

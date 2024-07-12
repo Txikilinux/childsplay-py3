@@ -214,7 +214,7 @@ class Clock(SPSprite):
             self.__seconds == self.__endseconds:
             if self.__alarm:
                 try:
-                    apply(self.__alarm)
+                    self.__alarm()
                 except Exception:
                     self.logger.exception("Exception in %s" % self.__class__)
                 self.__clock.stop()
