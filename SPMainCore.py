@@ -322,9 +322,9 @@ class MainCoreGui:
             module_logger.warning("program 'amixer' not found, unable to set volume levels: %s" % info)
             self.volume_level = 75
         else:
-            for line in output.split('\n'):
-                if "%]" in line:
-                    self.volume_level = int(line.split("%]")[0].split("[")[1])
+            for line in output.split(b'\n'):
+                if b"%]" in line:
+                    self.volume_level = int(line.split(b"%]")[0].split(b"[")[1])
         # Check to see if today it's the user birthday
         if row and row.birthdate:
             name = "%s %s" % (row.title, row.last_name)

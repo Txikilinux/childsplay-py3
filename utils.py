@@ -36,7 +36,14 @@ import datetime
 import types
 import configparser
 import math
-from collections import MutableMapping
+
+import sys
+
+if sys.version_info[:2] >= (3, 8):
+    from collections.abc import MutableMapping
+else:
+    from collections import MutableMapping
+
 from pygame.constants import *
 from pygame import surfarray
 import textwrap
